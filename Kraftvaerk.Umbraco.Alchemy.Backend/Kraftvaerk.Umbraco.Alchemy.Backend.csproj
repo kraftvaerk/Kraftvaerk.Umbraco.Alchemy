@@ -1,0 +1,39 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFrameworks>net10.0</TargetFrameworks>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <PackageId>Kraftvaerk.Umbraco.Alchemy</PackageId>
+    <Title>Kraftvaerk.Umbraco.Alchemy</Title>
+    <Authors>Umbraco.Community</Authors>
+    <Product>Kraftvaerk.Umbraco.Alchemy</Product>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <IncludeSymbols>False</IncludeSymbols>
+    <SymbolPackageFormat>snupkg</SymbolPackageFormat>
+    <PackageOutputPath>$(OutputPath)</PackageOutputPath>
+    <Version>0.0.0</Version>
+  </PropertyGroup>
+  <ItemGroup>
+    <None Update="README.md">
+      <Pack>True</Pack>
+      <PackagePath>\</PackagePath>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="Constants\" />
+    <Folder Include="Models\" />
+    <Folder Include="Helpers\" />
+  </ItemGroup>
+  <!-- Umbraco 17 for .NET 10 -->
+  <ItemGroup Condition="'$(TargetFramework)' == 'net10.0'">
+    <PackageReference Include="Umbraco.Cms" Version="17.2.1" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="ui\**" Pack="true" PackagePath="content\ui" />
+    <None Include="buildTransitive\**" Pack="true" PackagePath="buildTransitive" />
+	<None Include="appsettings-schema.Kraftvaerk.Umbraco.Alchemy.json" Pack="true" PackagePath="\" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="Umbraco.AI" Version="1.4.1" />
+  </ItemGroup>
+</Project>
