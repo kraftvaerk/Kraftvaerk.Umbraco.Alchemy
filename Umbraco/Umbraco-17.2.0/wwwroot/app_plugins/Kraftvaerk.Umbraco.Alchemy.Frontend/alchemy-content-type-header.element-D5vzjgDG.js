@@ -1,5 +1,5 @@
 import { html as d } from "@umbraco-cms/backoffice/external/lit";
-import { o as l, c as u } from "./alchemy-brew.call-api-DJDCtWmf.js";
+import { o as l, c as u } from "./alchemy-brew.call-api-DeSbS4X6.js";
 const h = "umb-content-type-workspace-editor-header";
 function w() {
   const n = customElements.get(h);
@@ -57,4 +57,4 @@ function w() {
 export {
   w as patchAlchemyContentTypeHeader
 };
-//# sourceMappingURL=alchemy-content-type-header.element-BRaIOI-b.js.map
+//# sourceMappingURL=alchemy-content-type-header.element-D5vzjgDG.js.map

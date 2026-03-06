@@ -5,8 +5,8 @@ var y = (t, e, o) => e.has(t) || u("Cannot " + o);
 var l = (t, e, o) => e.has(t) ? u("Cannot add the same private member more than once") : e instanceof WeakSet ? e.add(t) : e.set(t, o);
 var d = (t, e, o) => (y(t, e, "access private method"), o);
 import { html as m, css as b } from "@umbraco-cms/backoffice/external/lit";
-import { o as w, c as f } from "./alchemy-brew.call-api-DJDCtWmf.js";
-import { g as v } from "./alchemy-brew.collect-property-context-BC1cQ-xF.js";
+import { o as w, c as f } from "./alchemy-brew.call-api-DeSbS4X6.js";
+import { g as v } from "./alchemy-brew.collect-property-context-duH_ceg8.js";
 function q(t) {
   var p, h, a;
   const e = t.prototype.render, o = t.styles ?? [];
@@ -67,4 +67,4 @@ function q(t) {
 export {
   q as createAlchemyDesignEditorPropertyClass
 };
-//# sourceMappingURL=alchemy-design-editor-property.element-CMlsGZPT.js.map
+//# sourceMappingURL=alchemy-design-editor-property.element-B7GGezDH.js.map

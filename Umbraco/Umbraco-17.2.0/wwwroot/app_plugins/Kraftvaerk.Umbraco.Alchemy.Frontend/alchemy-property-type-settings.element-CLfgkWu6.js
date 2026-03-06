@@ -1,7 +1,7 @@
 import { html as O, css as R, customElement as C } from "@umbraco-cms/backoffice/external/lit";
 import { UMB_PROPERTY_TYPE_WORKSPACE_CONTEXT as B } from "@umbraco-cms/backoffice/property-type";
-import { o as M, c as N } from "./alchemy-brew.call-api-DJDCtWmf.js";
-import { g as w, p as K } from "./alchemy-brew.collect-property-context-BC1cQ-xF.js";
+import { o as M, c as N } from "./alchemy-brew.call-api-DeSbS4X6.js";
+import { g as w, p as K } from "./alchemy-brew.collect-property-context-duH_ceg8.js";
 var q = Object.defineProperty, L = Object.getOwnPropertyDescriptor, A = (e) => {
   throw TypeError(e);
 }, U = (e, t, n, c) => {
@@ -118,4 +118,4 @@ export {
   d as AlchemyPropertyTypeSettingsElement,
   z as default
 };
-//# sourceMappingURL=alchemy-property-type-settings.element-hUWK56ou.js.map
+//# sourceMappingURL=alchemy-property-type-settings.element-CLfgkWu6.js.map

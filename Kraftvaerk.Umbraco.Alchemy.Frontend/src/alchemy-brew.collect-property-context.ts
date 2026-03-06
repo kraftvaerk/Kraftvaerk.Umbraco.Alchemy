@@ -1,23 +1,9 @@
 import { UMB_AUTH_CONTEXT } from '@umbraco-cms/backoffice/auth';
+import { postApiV1KraftvaerkUmbracoAlchemyBrewContextByKey } from './api/sdk.gen.js';
+import type { BrewPropertyContext, BrewPropertyInfo } from './api/types.gen.js';
 
-export interface AlchemyPropertyInfo {
-    name: string;
-    alias: string;
-    description?: string | null;
-    containerName?: string | null;
-    /** 'Tab' | 'Group' | null */
-    containerType?: string | null;
-}
-
-export interface AlchemyPropertyDescriptionContext {
-    documentTypeName: string;
-    documentTypeDescription?: string | null;
-    targetPropertyAlias: string;
-    targetPropertyName?: string | null;
-    targetPropertyContainerName?: string | null;
-    targetPropertyContainerType?: string | null;
-    allProperties: AlchemyPropertyInfo[];
-}
+// Re-export generated types under the names other modules already import.
+export type { BrewPropertyInfo as AlchemyPropertyInfo, BrewPropertyContext as AlchemyPropertyDescriptionContext };
 
 /**
  * Extracts the document type GUID from the current URL.
@@ -40,25 +26,25 @@ export function getDocTypeGuidFromUrl(): string | undefined {
 export async function pushPropertyContextToCache(
     host: HTMLElement,
     cacheKey: string,
-    context: AlchemyPropertyDescriptionContext,
+    context: BrewPropertyContext,
 ): Promise<void> {
     const authContext = await (host as any).getContext(UMB_AUTH_CONTEXT);
     const config = authContext?.getOpenApiConfiguration?.() as
-        | { token?: string | (() => Promise<string>); credentials?: RequestCredentials }
+        | { token?: string | (() => Promise<string>) }
         | undefined;
 
-    let authHeader: Record<string, string> = {};
-    if (config?.token) {
-        const raw = typeof config.token === 'function' ? await config.token() : config.token;
-        if (raw) authHeader = { Authorization: `Bearer ${raw}` };
-    }
+    const token = typeof config?.token === 'function' ? await config.token() : config?.token;
 
     console.log('[Alchemy] pushPropertyContextToCache: fetching brew/context/', cacheKey);
-    const res = await fetch(`/api/v1/Kraftvaerk.Umbraco.Alchemy/brew/context/${encodeURIComponent(cacheKey)}`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', ...authHeader },
-        credentials: config?.credentials ?? 'same-origin',
-        body: JSON.stringify(context),
-    }).catch((err) => { console.error('[Alchemy] pushPropertyContextToCache fetch error:', err); return null; });
-    console.log('[Alchemy] pushPropertyContextToCache response:', res?.status);
+    try {
+        const { response } = await postApiV1KraftvaerkUmbracoAlchemyBrewContextByKey({
+            baseUrl: window.location.origin,
+            auth: token,
+            path: { key: cacheKey },
+            body: context,
+        });
+        console.log('[Alchemy] pushPropertyContextToCache response:', response.status);
+    } catch (err) {
+        console.error('[Alchemy] pushPropertyContextToCache error:', err);
+    }
 }

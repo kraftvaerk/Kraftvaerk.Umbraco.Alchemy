@@ -1,4 +1,5 @@
 import { UMB_AUTH_CONTEXT } from '@umbraco-cms/backoffice/auth';
+import { postApiV1KraftvaerkUmbracoAlchemyBrew } from './api/sdk.gen.js';
 
 /**
  * Calls the Alchemy /brew endpoint and returns the AI-generated text.
@@ -15,31 +16,20 @@ export async function callBrewApi(
     contextAlias: string,
     cacheKey?: string,
 ): Promise<string | undefined> {
-    // Resolve the Umbraco auth context to get a bearer token.
     const authContext = await (host as any).getContext(UMB_AUTH_CONTEXT);
     const config = authContext?.getOpenApiConfiguration?.() as
-        | { token?: string | (() => Promise<string>); credentials?: RequestCredentials }
+        | { token?: string | (() => Promise<string>) }
         | undefined;
 
-    let authHeader: Record<string, string> = {};
-    if (config?.token) {
-        const raw = typeof config.token === 'function' ? await config.token() : config.token;
-        if (raw) authHeader = { Authorization: `Bearer ${raw}` };
-    }
+    const token = typeof config?.token === 'function' ? await config.token() : config?.token;
 
     try {
-        const res = await fetch('/api/v1/Kraftvaerk.Umbraco.Alchemy/brew', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                ...authHeader,
-            },
-            credentials: config?.credentials ?? 'same-origin',
-            body: JSON.stringify({ prompt, contextAlias, cacheKey }),
+        const { data } = await postApiV1KraftvaerkUmbracoAlchemyBrew({
+            baseUrl: window.location.origin,
+            auth: token,
+            body: { prompt, contextAlias, cacheKey },
         });
-
-        if (!res.ok) return undefined;
-        const data = (await res.json()) as { result: string };
+        if (!data?.result) return undefined;
         // Strip surrounding quotes the model sometimes adds (e.g. "My description").
         return data.result.replace(/^["'\u201C\u201D]+|["'\u201C\u201D]+$/gu, '').trim();
     } catch {

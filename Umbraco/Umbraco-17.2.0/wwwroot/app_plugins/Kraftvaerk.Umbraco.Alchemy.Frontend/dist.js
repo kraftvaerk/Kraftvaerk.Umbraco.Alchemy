@@ -1,7 +1,7 @@
 const p = "umb-content-type-design-editor-property", s = customElements.define.bind(customElements);
 customElements.define = function(t, e, i) {
   if (t === p) {
-    import("./alchemy-design-editor-property.element-CMlsGZPT.js").then(({ createAlchemyDesignEditorPropertyClass: n }) => {
+    import("./alchemy-design-editor-property.element-B7GGezDH.js").then(({ createAlchemyDesignEditorPropertyClass: n }) => {
       const o = n(e);
       s(t, o, i);
     });
@@ -34,29 +34,29 @@ const r = (t, e) => {
     e,
     "Umb.WorkspaceView.PropertyType.Settings",
     "umb-property-type-workspace-view-settings",
-    () => import("./alchemy-property-type-settings.element-hUWK56ou.js")
+    () => import("./alchemy-property-type-settings.element-CLfgkWu6.js")
   ), m(
     e,
     "Umb.WorkspaceView.BlockType.Grid.Settings",
     "umb-block-grid-type-workspace-view",
-    () => import("./alchemy-block-grid-workspace-view.element-BZ8924pQ.js")
+    () => import("./alchemy-block-grid-workspace-view.element-GLvn_jAk.js")
   ), m(
     e,
     "Umb.WorkspaceView.BlockType.List.Settings",
     "umb-block-list-type-workspace-view-settings",
-    () => import("./alchemy-block-list-workspace-view.element-0AvR9h6O.js")
+    () => import("./alchemy-block-list-workspace-view.element-Dh5RH1xe.js")
   ), e.register({
     type: "workspaceContext",
     alias: "alchemy.workspaceContext.documentType",
     name: "Alchemy Document Type Context Observer",
-    api: () => import("./alchemy-doctype-context-observer-Cl4dfErr.js"),
+    api: () => import("./alchemy-doctype-context-observer-DPGCEDzX.js"),
     conditions: [
       {
         alias: "Umb.Condition.WorkspaceAlias",
         match: "Umb.Workspace.DocumentType"
       }
     ]
-  }), import("./alchemy-content-type-header.element-BRaIOI-b.js").then(({ patchAlchemyContentTypeHeader: i }) => {
+  }), import("./alchemy-content-type-header.element-D5vzjgDG.js").then(({ patchAlchemyContentTypeHeader: i }) => {
     i();
   });
 };

@@ -1,5 +1,5 @@
 import { customElement as n } from "@umbraco-cms/backoffice/external/lit";
-import { i as a } from "./alchemy-block-type-workspace-view.element-DlHsIGUd.js";
+import { i as a } from "./alchemy-block-type-workspace-view.element-Vpx5wwRJ.js";
 var u = Object.defineProperty, w = Object.getOwnPropertyDescriptor, f = (t, s, c, o) => {
   for (var e = o > 1 ? void 0 : o ? w(s, c) : s, l = t.length - 1, r; l >= 0; l--)
     (r = t[l]) && (e = (o ? r(s, c, e) : r(e)) || e);
@@ -19,4 +19,4 @@ export {
   p as AlchemyBlockListWorkspaceViewElement,
   y as default
 };
-//# sourceMappingURL=alchemy-block-list-workspace-view.element-0AvR9h6O.js.map
+//# sourceMappingURL=alchemy-block-list-workspace-view.element-Dh5RH1xe.js.map

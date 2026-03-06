@@ -5,7 +5,7 @@ var u = (o, t, e) => t.has(o) || N("Cannot " + e);
 var O = (o, t, e) => (u(o, t, "read from private field"), e ? e.call(o) : t.get(o)), y = (o, t, e) => t.has(o) ? N("Cannot add the same private member more than once") : t instanceof WeakSet ? t.add(o) : t.set(o, e), D = (o, t, e, n) => (u(o, t, "write to private field"), n ? n.call(o, e) : t.set(o, e), e), b = (o, t, e) => (u(o, t, "access private method"), e);
 import { UmbControllerBase as U } from "@umbraco-cms/backoffice/class-api";
 import { UMB_WORKSPACE_CONTEXT as B } from "@umbraco-cms/backoffice/workspace";
-import { g as C, p as L } from "./alchemy-brew.collect-property-context-BC1cQ-xF.js";
+import { g as C, p as L } from "./alchemy-brew.collect-property-context-duH_ceg8.js";
 var a, m, v;
 class R extends U {
   constructor(e) {
@@ -55,4 +55,4 @@ export {
   R as AlchemyDocTypeContextObserver,
   R as default
 };
-//# sourceMappingURL=alchemy-doctype-context-observer-Cl4dfErr.js.map
+//# sourceMappingURL=alchemy-doctype-context-observer-DPGCEDzX.js.map
