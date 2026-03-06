@@ -92,10 +92,10 @@ npm run watch        # incremental watch build, copies assets into local Umbraco
 
 ### Backend / local Umbraco
 
-A full Umbraco 17 instance is included under `Umbraco/` for development. Run it with:
+A full Umbraco 17 instance is included under `Umbraco/Umbraco-17.2.0/` for development. Run it with:
 
 ```bash
-dotnet run --project Kraftvaerk.Umbraco.Alchemy.Backend
+dotnet run --project Umbraco/Umbraco-17.2.0/Umbraco-17.2.0.csproj
 ```
 
 Default backoffice credentials:
