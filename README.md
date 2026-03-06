@@ -8,7 +8,7 @@ This package was created for the **Umbraco Spark Package Hackathon** and is a wo
 
 ## What it does
 
-Editors spend time writing descriptions for document types and their properties, and UFM label expressions for blocks. Alchemy automates this by placing a **"Brew with AI"** wand button directly in the relevant parts of the Umbraco backoffice:
+Developers spend time writing descriptions for document types and their properties, and UFM label expressions for blocks. Alchemy automates this by placing a **"Brew with AI"** wand button directly in the relevant parts of the Umbraco backoffice:
 
 - **Document type descriptions** - Adds a brew button next to the description field in the document type header.
 - **Property descriptions** - Adds a brew button to both the property type settings panel and the inline design editor property row.
