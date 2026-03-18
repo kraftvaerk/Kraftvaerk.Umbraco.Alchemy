@@ -2,6 +2,7 @@ import { html } from '@umbraco-cms/backoffice/external/lit';
 import { openBrewModal } from '../alchemy-brew.open.js';
 import { callBrewApi } from '../alchemy-brew.call-api.js';
 import { getDocTypeGuidFromUrl } from '../alchemy-brew.collect-property-context.js';
+import { attachHoldBehaviour, injectHoldStyles } from '../alchemy-brew.hold.js';
 
 // Strategy 3: Prototype patching for eagerly bundled elements.
 // umb-content-type-workspace-editor-header is a direct (non-lazy) import in
@@ -10,6 +11,22 @@ import { getDocTypeGuidFromUrl } from '../alchemy-brew.collect-property-context.
 // patch the prototype in-place at onInit time.
 
 const HEADER_TAG = 'umb-content-type-workspace-editor-header';
+
+const HEADER_PROMPTS = [
+    'Write a concise description for this document type.',
+    'Explain what content this type represents.',
+    'Add a helpful note for content editors.',
+];
+
+async function brewDirectly(host: HTMLElement, prompt: string) {
+    const input = host.shadowRoot?.querySelector('#description') as HTMLInputElement | null;
+    if (!input) return;
+    const cacheKey = getDocTypeGuidFromUrl();
+    const result = await callBrewApi(host, prompt, 'document-type-descriptions', cacheKey);
+    if (result === undefined) return;
+    input.value = result;
+    input.dispatchEvent(new InputEvent('input', { bubbles: true, composed: true }));
+}
 
 export function patchAlchemyContentTypeHeader() {
     const HeaderClass = customElements.get(HEADER_TAG) as any;
@@ -26,21 +43,9 @@ export function patchAlchemyContentTypeHeader() {
                 look="secondary"
                 compact
                 @click=${async () => {
-                    const userPrompt = await openBrewModal(this, {
-                        prompts: [
-                            'Write a concise description for this document type.',
-                            'Explain what content this type represents.',
-                            'Add a helpful note for content editors.',
-                        ],
-                    });
+                    const userPrompt = await openBrewModal(this, { prompts: HEADER_PROMPTS });
                     if (userPrompt === undefined) return;
-                    const input = this.shadowRoot?.querySelector('#description') as HTMLInputElement | null;
-                    if (!input) return;
-                    const cacheKey = getDocTypeGuidFromUrl();
-                    const result = await callBrewApi(this, userPrompt, 'document-type-descriptions', cacheKey);
-                    if (result === undefined) return;
-                    input.value = result;
-                    input.dispatchEvent(new InputEvent('input', { bubbles: true, composed: true }));
+                    await brewDirectly(this, userPrompt);
                 }}>
                 <uui-icon name="icon-wand"></uui-icon>
             </uui-button>
@@ -54,6 +59,10 @@ export function patchAlchemyContentTypeHeader() {
         const desc = this.shadowRoot?.querySelector('#description');
         const btn = this.shadowRoot?.querySelector('#alchemy-brew-btn');
         if (!desc || !btn) return;
+
+        // Attach hold-to-brew behaviour (idempotent).
+        if (this.shadowRoot) injectHoldStyles(this.shadowRoot);
+        attachHoldBehaviour(btn as HTMLElement, () => brewDirectly(this, HEADER_PROMPTS[0]));
 
         if (!this.shadowRoot?.querySelector('#alchemy-description-row')) {
             const row = document.createElement('div');

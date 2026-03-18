@@ -36,6 +36,16 @@ namespace Kraftvaerk.Umbraco.Alchemy.Backend.Controllers
             return reader.ReadToEnd();
         });
 
+        private static readonly Lazy<string> UfmContextTemplate = new(() =>
+        {
+            var assembly = Assembly.GetExecutingAssembly();
+            var resourceName = assembly.GetManifestResourceNames()
+                .First(n => n.EndsWith("UfmContextPrompt.md", StringComparison.Ordinal));
+            using var stream = assembly.GetManifestResourceStream(resourceName)!;
+            using var reader = new StreamReader(stream);
+            return reader.ReadToEnd();
+        });
+
         private readonly IAIChatService _chatService;
         private readonly IAIContextService _contextService;
         private readonly IAIContextFormatter _contextFormatter;
@@ -146,7 +156,10 @@ namespace Kraftvaerk.Umbraco.Alchemy.Backend.Controllers
                     }
                 }
 
-                var contextPrompt = BuildPropertyContextPrompt(pc);
+                // Choose the right template based on context alias.
+                var contextPrompt = string.Equals(request.ContextAlias, "ufm", StringComparison.OrdinalIgnoreCase)
+                    ? BuildUfmContextPrompt(pc)
+                    : BuildPropertyContextPrompt(pc);
                 messages.Add(new ChatMessage(ChatRole.System, contextPrompt));
             }
 
@@ -208,6 +221,34 @@ namespace Kraftvaerk.Umbraco.Alchemy.Backend.Controllers
                     : $"{prop.ContainerType ?? "Group"}: {prop.ContainerName}";
                 var desc = string.IsNullOrWhiteSpace(prop.Description) ? "\u2014" : prop.Description;
                 sb.AppendLine($"| {prop.Name} | `{prop.Alias}` | {location} | {desc} |");
+            }
+            return sb.ToString();
+        }
+
+        private static string BuildUfmContextPrompt(BrewPropertyContext pc)
+        {
+            var description = string.IsNullOrWhiteSpace(pc.DocumentTypeDescription)
+                ? string.Empty
+                : $"\n{pc.DocumentTypeDescription}\n";
+
+            var propertiesTable = pc.AllProperties.Count > 0
+                ? BuildAliasOnlyTable(pc.AllProperties)
+                : string.Empty;
+
+            return UfmContextTemplate.Value
+                .Replace("{{DocumentTypeName}}", pc.DocumentTypeName)
+                .Replace("{{DocumentTypeDescription}}", description)
+                .Replace("{{PropertiesTable}}", propertiesTable);
+        }
+
+        private static string BuildAliasOnlyTable(List<BrewPropertyInfo> properties)
+        {
+            var sb = new StringBuilder();
+            sb.AppendLine("| Property | Alias |");
+            sb.AppendLine("|----------|-------|");
+            foreach (var prop in properties)
+            {
+                sb.AppendLine($"| {prop.Name} | `{prop.Alias}` |");
             }
             return sb.ToString();
         }

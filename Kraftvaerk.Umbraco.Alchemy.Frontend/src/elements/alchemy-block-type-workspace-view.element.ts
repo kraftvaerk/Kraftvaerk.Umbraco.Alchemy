@@ -8,6 +8,13 @@
 
 import { openBrewModal } from '../alchemy-brew.open.js';
 import { callBrewApi } from '../alchemy-brew.call-api.js';
+import { attachHoldBehaviour, HOLD_CSS } from '../alchemy-brew.hold.js';
+
+const BLOCK_PROMPTS = [
+    'Generate a label using the most identifying property',
+    'Show the main property with a fallback for empty state',
+    'Combine two properties into a short label',
+];
 
 export function injectAlchemyBrewButton(host: HTMLElement): void {
     // Pierce: host shadow → umb-property → umb-property-layout shadow → #headerColumn
@@ -36,6 +43,7 @@ export function injectAlchemyBrewButton(host: HTMLElement): void {
         #headerColumn:focus-within #alchemy-brew-btn {
             opacity: 1;
         }
+        ${HOLD_CSS}
     `);
     if (layoutEl?.shadowRoot) {
         layoutEl.shadowRoot.adoptedStyleSheets = [
@@ -44,6 +52,24 @@ export function injectAlchemyBrewButton(host: HTMLElement): void {
         ];
     }
 
+    const brewDirect = async (prompt: string) => {
+        // Resolve the element type GUID from the block type workspace context
+        // so the backend can look up cached property context for this element type.
+        let cacheKey: string | undefined;
+        try {
+            const blockWsCtx = await (host as any).getContext?.('UmbWorkspaceContext');
+            cacheKey = blockWsCtx?.getUnique?.() as string | undefined;
+        } catch { /* context not available — proceed without cache key */ }
+
+        const result = await callBrewApi(host, prompt, 'ufm', cacheKey);
+        if (result === undefined) return;
+        const textBox = propEl?.shadowRoot?.querySelector('umb-property-editor-ui-text-box');
+        const uuiInput = textBox?.shadowRoot?.querySelector('uui-input') as HTMLElement | null;
+        if (!uuiInput) return;
+        (uuiInput as any).value = result;
+        uuiInput.dispatchEvent(new InputEvent('input', { bubbles: true, composed: true }));
+    };
+
     const btn = document.createElement('uui-button') as HTMLElement;
     btn.id = 'alchemy-brew-btn';
     btn.setAttribute('label', 'Brew label');
@@ -51,23 +77,12 @@ export function injectAlchemyBrewButton(host: HTMLElement): void {
     btn.setAttribute('compact', '');
     btn.innerHTML = '<uui-icon name="icon-wand"></uui-icon>';
     btn.addEventListener('click', async () => {
-        const userPrompt = await openBrewModal(host, {
-            prompts: [
-                'Return the property alias, e.g. ${ title }',
-                'Show title with fallback: ${ title ?? \'Untitled\' }',
-                'Conditionally show badge: ${ sale ? \'🏷️\' : \'\'  }',
-            ],
-        });
+        const userPrompt = await openBrewModal(host, { prompts: BLOCK_PROMPTS });
         if (userPrompt === undefined) return;
-        const result = await callBrewApi(host, userPrompt, 'ufm');
-        if (result === undefined) return;
-        // Pierce umb-property → umb-property-editor-ui-text-box → uui-input
-        const textBox = propEl?.shadowRoot?.querySelector('umb-property-editor-ui-text-box');
-        const uuiInput = textBox?.shadowRoot?.querySelector('uui-input') as HTMLElement | null;
-        if (!uuiInput) return;
-        (uuiInput as any).value = result;
-        uuiInput.dispatchEvent(new InputEvent('input', { bubbles: true, composed: true }));
+        await brewDirect(userPrompt);
     });
+
+    attachHoldBehaviour(btn, () => brewDirect(BLOCK_PROMPTS[0]));
 
     // Insert right after uui-label so tab order is natural.
     const label = headerCol.querySelector('uui-label');

@@ -4,6 +4,7 @@ import { openBrewModal } from '../alchemy-brew.open.js';
 import { callBrewApi } from '../alchemy-brew.call-api.js';
 import { getDocTypeGuidFromUrl, pushPropertyContextToCache } from '../alchemy-brew.collect-property-context.js';
 import type { AlchemyPropertyDescriptionContext, AlchemyPropertyInfo } from '../alchemy-brew.collect-property-context.js';
+import { attachHoldBehaviour, injectHoldStyles } from '../alchemy-brew.hold.js';
 
 // This module is imported only after customElements.whenDefined() resolves for
 // umb-property-type-workspace-view-settings, so the base class is guaranteed
@@ -72,25 +73,30 @@ export class AlchemyPropertyTypeSettingsElement extends Base {
         } catch (err) { console.error('[Alchemy] #pushContextToCache error:', err); }
     }
 
-    async #onBrewClick() {
-        const userPrompt = await openBrewModal(this, {
-            prompts: [
-                'Write a concise description for this property.',
-                'Explain what editors should enter here.',
-                'Add a helpful hint for content editors.',
-            ],
-        });
-        if (userPrompt === undefined) return;
+    async #brewDirectly(prompt: string) {
         const input = this.shadowRoot?.querySelector('#description-input') as HTMLInputElement | HTMLTextAreaElement | null;
         if (!input) return;
-
         const cacheKey = getDocTypeGuidFromUrl();
         const propWsCtx = await (this as any).getContext?.(UMB_PROPERTY_TYPE_WORKSPACE_CONTEXT);
         const propAlias = propWsCtx?.getData?.()?.alias as string | undefined;
-        const result = await callBrewApi(this, userPrompt, 'property-descriptions', cacheKey, propAlias);
+        const result = await callBrewApi(this, prompt, 'property-descriptions', cacheKey, propAlias);
         if (result === undefined) return;
         input.value = result;
         input.dispatchEvent(new InputEvent('input', { bubbles: true, composed: true }));
+    }
+
+    private static readonly _PROMPTS = [
+        'Write a concise description for this property.',
+        'Explain what editors should enter here.',
+        'Add a helpful hint for content editors.',
+    ];
+
+    async #onBrewClick() {
+        const userPrompt = await openBrewModal(this, {
+            prompts: AlchemyPropertyTypeSettingsElement._PROMPTS,
+        });
+        if (userPrompt === undefined) return;
+        await this.#brewDirectly(userPrompt);
     }
 
     updated() {
@@ -106,6 +112,13 @@ export class AlchemyPropertyTypeSettingsElement extends Base {
             btn.setAttribute('slot', 'action-menu');
             layout.appendChild(btn);
         }
+
+        // Attach hold-to-brew behaviour (idempotent).
+        if (this.shadowRoot) injectHoldStyles(this.shadowRoot);
+        attachHoldBehaviour(
+            btn as HTMLElement,
+            () => this.#brewDirectly(AlchemyPropertyTypeSettingsElement._PROMPTS[0]),
+        );
     }
 
     render() {

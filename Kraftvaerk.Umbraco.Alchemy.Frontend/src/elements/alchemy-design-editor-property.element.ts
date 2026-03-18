@@ -2,6 +2,7 @@ import { html, css } from '@umbraco-cms/backoffice/external/lit';
 import { openBrewModal } from '../alchemy-brew.open.js';
 import { callBrewApi } from '../alchemy-brew.call-api.js';
 import { getDocTypeGuidFromUrl } from '../alchemy-brew.collect-property-context.js';
+import { attachHoldBehaviour, injectHoldStyles } from '../alchemy-brew.hold.js';
 
 // Exports a factory rather than defining a custom element directly.
 // The factory receives the base class (resolved at runtime via customElements.get)
@@ -14,28 +15,29 @@ export function createAlchemyDesignEditorPropertyClass(Base: HTMLElementConstruc
     const baseStyles = (Base as any).styles ?? [];
 
     return class AlchemyDesignEditorPropertyElement extends Base {
-        async #onBrewClick() {
-            const userPrompt = await openBrewModal(this, {
-                prompts: [
-                    'Write a concise description for this property.',
-                    'Explain what editors should enter here.',
-                    'Add a helpful hint for content editors.',
-                ],
-            });
-            if (userPrompt === undefined) return;
+        static readonly #PROMPTS = [
+            'Write a concise description for this property.',
+            'Explain what editors should enter here.',
+            'Add a helpful hint for content editors.',
+        ];
+
+        async #brewDirectly(prompt: string) {
             const input = this.shadowRoot?.querySelector('#description-input') as HTMLInputElement | HTMLTextAreaElement | null;
             if (!input) return;
-
-            // This element cannot resolve the workspace context, but the
-            // property-type-settings element pushes the context to the backend
-            // cache.  We just send the GUID from the URL as the cache key.
             const cacheKey = getDocTypeGuidFromUrl();
             const propAlias = (this as any).property?.alias as string | undefined;
-
-            const result = await callBrewApi(this, userPrompt, 'property-descriptions', cacheKey, propAlias);
+            const result = await callBrewApi(this, prompt, 'property-descriptions', cacheKey, propAlias);
             if (result === undefined) return;
             input.value = result;
             input.dispatchEvent(new InputEvent('input', { bubbles: true, composed: true }));
+        }
+
+        async #onBrewClick() {
+            const userPrompt = await openBrewModal(this, {
+                prompts: AlchemyDesignEditorPropertyElement.#PROMPTS,
+            });
+            if (userPrompt === undefined) return;
+            await this.#brewDirectly(userPrompt);
         }
 
         updated() {
@@ -51,6 +53,13 @@ export function createAlchemyDesignEditorPropertyClass(Base: HTMLElementConstruc
                 (p as HTMLElement).style.position = 'relative';
                 p.appendChild(btn);
             }
+
+            // Attach hold-to-brew behaviour (idempotent).
+            if (this.shadowRoot) injectHoldStyles(this.shadowRoot);
+            attachHoldBehaviour(
+                btn as HTMLElement,
+                () => this.#brewDirectly(AlchemyDesignEditorPropertyElement.#PROMPTS[0]),
+            );
         }
 
         render() {
