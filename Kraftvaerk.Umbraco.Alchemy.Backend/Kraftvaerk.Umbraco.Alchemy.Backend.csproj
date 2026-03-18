@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <TargetFrameworks>net10.0</TargetFrameworks>
     <ImplicitUsings>enable</ImplicitUsings>
@@ -24,9 +24,12 @@
     <Folder Include="Models\" />
     <Folder Include="Helpers\" />
   </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="Templates\PropertyContextPrompt.md" />
+  </ItemGroup>
   <!-- Umbraco 17 for .NET 10 -->
   <ItemGroup Condition="'$(TargetFramework)' == 'net10.0'">
-    <PackageReference Include="Umbraco.Cms" Version="17.2.1" />
+    <PackageReference Include="Umbraco.Cms" Version="17.2.2" />
   </ItemGroup>
   <ItemGroup>
     <None Include="ui\**" Pack="true" PackagePath="content\ui" />
@@ -34,6 +37,6 @@
 	<None Include="appsettings-schema.Kraftvaerk.Umbraco.Alchemy.json" Pack="true" PackagePath="\" />
   </ItemGroup>
   <ItemGroup>
-    <PackageReference Include="Umbraco.AI" Version="1.4.1" />
+    <PackageReference Include="Umbraco.AI" Version="1.6.0" />
   </ItemGroup>
 </Project>

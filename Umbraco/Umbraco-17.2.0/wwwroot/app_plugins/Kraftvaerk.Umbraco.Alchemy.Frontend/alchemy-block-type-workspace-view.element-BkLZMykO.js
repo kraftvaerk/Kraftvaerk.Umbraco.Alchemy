@@ -1,4 +1,4 @@
-import { o as y, c as m } from "./alchemy-brew.call-api-DJDCtWmf.js";
+import { o as y, c as m } from "./alchemy-brew.call-api-BJt-gSTw.js";
 function f(i) {
   var l, s, d;
   const o = (l = i.shadowRoot) == null ? void 0 : l.querySelector('umb-property[alias="label"]'), e = (s = o == null ? void 0 : o.shadowRoot) == null ? void 0 : s.querySelector("umb-property-layout"), r = (d = e == null ? void 0 : e.shadowRoot) == null ? void 0 : d.querySelector("#headerColumn");
@@ -45,4 +45,4 @@ function f(i) {
 export {
   f as i
 };
-//# sourceMappingURL=alchemy-block-type-workspace-view.element-DlHsIGUd.js.map
+//# sourceMappingURL=alchemy-block-type-workspace-view.element-BkLZMykO.js.map

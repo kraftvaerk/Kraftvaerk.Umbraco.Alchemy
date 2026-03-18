@@ -1,6 +1,7 @@
 import { html } from '@umbraco-cms/backoffice/external/lit';
 import { openBrewModal } from '../alchemy-brew.open.js';
 import { callBrewApi } from '../alchemy-brew.call-api.js';
+import { getDocTypeGuidFromUrl } from '../alchemy-brew.collect-property-context.js';
 
 // Strategy 3: Prototype patching for eagerly bundled elements.
 // umb-content-type-workspace-editor-header is a direct (non-lazy) import in
@@ -35,7 +36,8 @@ export function patchAlchemyContentTypeHeader() {
                     if (userPrompt === undefined) return;
                     const input = this.shadowRoot?.querySelector('#description') as HTMLInputElement | null;
                     if (!input) return;
-                    const result = await callBrewApi(this, userPrompt, 'property-descriptions');
+                    const cacheKey = getDocTypeGuidFromUrl();
+                    const result = await callBrewApi(this, userPrompt, 'property-descriptions', cacheKey);
                     if (result === undefined) return;
                     input.value = result;
                     input.dispatchEvent(new InputEvent('input', { bubbles: true, composed: true }));

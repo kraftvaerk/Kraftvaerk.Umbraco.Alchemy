@@ -1,16 +1,19 @@
+using System.ComponentModel.DataAnnotations;
+using System.Reflection;
+using System.Text;
 using Asp.Versioning;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.AI;
 using Microsoft.Extensions.Caching.Memory;
-using System.ComponentModel.DataAnnotations;
 using Umbraco.AI.Core.Chat;
-using Umbraco.Cms.Core;
 using Umbraco.AI.Core.Contexts;
+using Umbraco.AI.Core.Models;
 using Umbraco.AI.Core.Profiles;
 using Umbraco.Cms.Api.Common.Attributes;
 using Umbraco.Cms.Api.Common.Filters;
+using Umbraco.Cms.Core;
 using Umbraco.Cms.Web.Common.Authorization;
 
 namespace Kraftvaerk.Umbraco.Alchemy.Backend.Controllers
@@ -23,6 +26,16 @@ namespace Kraftvaerk.Umbraco.Alchemy.Backend.Controllers
     [Route("api/v{version:apiVersion}/Kraftvaerk.Umbraco.Alchemy")]
     public class BrewController : Controller
     {
+        private static readonly Lazy<string> PropertyContextTemplate = new(() =>
+        {
+            var assembly = Assembly.GetExecutingAssembly();
+            var resourceName = assembly.GetManifestResourceNames()
+                .First(n => n.EndsWith("PropertyContextPrompt.md", StringComparison.Ordinal));
+            using var stream = assembly.GetManifestResourceStream(resourceName)!;
+            using var reader = new StreamReader(stream);
+            return reader.ReadToEnd();
+        });
+
         private readonly IAIChatService _chatService;
         private readonly IAIContextService _contextService;
         private readonly IAIContextFormatter _contextFormatter;
@@ -117,73 +130,14 @@ namespace Kraftvaerk.Umbraco.Alchemy.Backend.Controllers
                      ?? (request.CacheKey is { } ck ? _cache.Get<BrewPropertyContext>($"alchemy:ctx:{ck}") : null);
             if (pc is not null)
             {
-                var sb = new System.Text.StringBuilder();
-                sb.AppendLine("## Document Type Context");
-                sb.Append("You are writing a property description inside the Umbraco backoffice for document type: **");
-                sb.Append(pc.DocumentTypeName);
-                sb.AppendLine("**");
-                if (!string.IsNullOrWhiteSpace(pc.DocumentTypeDescription))
-                {
-                    sb.AppendLine();
-                    sb.AppendLine(pc.DocumentTypeDescription);
-                }
-
-                sb.AppendLine();
-                sb.AppendLine("## Target Property");
-                if (!string.IsNullOrWhiteSpace(pc.TargetPropertyName))
-                {
-                    sb.Append("Write a description for: **");
-                    sb.Append(pc.TargetPropertyName);
-                    sb.Append("** (alias: `");
-                    sb.Append(pc.TargetPropertyAlias);
-                    sb.AppendLine("`)");
-                }
-                else
-                {
-                    sb.Append("Write a description for the property with alias: `");
-                    sb.Append(pc.TargetPropertyAlias);
-                    sb.AppendLine("`");
-                }
-                if (!string.IsNullOrWhiteSpace(pc.TargetPropertyContainerName))
-                {
-                    sb.Append("Located in: ");
-                    sb.Append(pc.TargetPropertyContainerType ?? "Group");
-                    sb.Append(" \"");
-                    sb.Append(pc.TargetPropertyContainerName);
-                    sb.AppendLine("\"");
-                }
-
-                if (pc.AllProperties.Count > 0)
-                {
-                    sb.AppendLine();
-                    sb.AppendLine("## All Properties in This Document Type");
-                    sb.AppendLine("| Property | Alias | Location | Current Description |");
-                    sb.AppendLine("|----------|-------|----------|---------------------|");
-                    foreach (var prop in pc.AllProperties)
-                    {
-                        var location = string.IsNullOrWhiteSpace(prop.ContainerName)
-                            ? "—"
-                            : $"{prop.ContainerType ?? "Group"}: {prop.ContainerName}";
-                        var desc = string.IsNullOrWhiteSpace(prop.Description) ? "—" : prop.Description;
-                        sb.Append("| ");
-                        sb.Append(prop.Name);
-                        sb.Append(" | `");
-                        sb.Append(prop.Alias);
-                        sb.Append("` | ");
-                        sb.Append(location);
-                        sb.Append(" | ");
-                        sb.Append(desc);
-                        sb.AppendLine(" |");
-                    }
-                }
-
-                messages.Add(new ChatMessage(ChatRole.System, sb.ToString()));
+                var contextPrompt = BuildPropertyContextPrompt(pc);
+                messages.Add(new ChatMessage(ChatRole.System, contextPrompt));
             }
 
             messages.Add(new ChatMessage(ChatRole.User, request.Prompt));
 
-            // Use the gpt4omini profile; fall back to the global default if not found.
-            var profile = await _profileService.GetProfileByAliasAsync("gpt4omini", cancellationToken);
+            
+            var profile = await _profileService.GetDefaultProfileAsync(AICapability.Chat, cancellationToken);
 
             ChatResponse response;
             if (profile is not null)
@@ -192,6 +146,49 @@ namespace Kraftvaerk.Umbraco.Alchemy.Backend.Controllers
                 response = await _chatService.GetChatResponseAsync(messages, cancellationToken: cancellationToken);
 
             return Ok(new BrewResponseModel { Result = response.Text ?? string.Empty });
+        }
+
+        private static string BuildPropertyContextPrompt(BrewPropertyContext pc)
+        {
+            var description = string.IsNullOrWhiteSpace(pc.DocumentTypeDescription)
+                ? string.Empty
+                : $"\n{pc.DocumentTypeDescription}\n";
+
+            var targetSection = !string.IsNullOrWhiteSpace(pc.TargetPropertyName)
+                ? $"Write a description for: **{pc.TargetPropertyName}** (alias: `{pc.TargetPropertyAlias}`)"
+                : $"Write a description for the property with alias: `{pc.TargetPropertyAlias}`";
+
+            var container = !string.IsNullOrWhiteSpace(pc.TargetPropertyContainerName)
+                ? $"Located in: {pc.TargetPropertyContainerType ?? "Group"} \"{pc.TargetPropertyContainerName}\""
+                : string.Empty;
+
+            var propertiesTable = pc.AllProperties.Count > 0
+                ? BuildPropertiesTable(pc.AllProperties)
+                : string.Empty;
+
+            return PropertyContextTemplate.Value
+                .Replace("{{DocumentTypeName}}", pc.DocumentTypeName)
+                .Replace("{{DocumentTypeDescription}}", description)
+                .Replace("{{TargetPropertySection}}", targetSection)
+                .Replace("{{TargetPropertyContainer}}", container)
+                .Replace("{{PropertiesTable}}", propertiesTable);
+        }
+
+        private static string BuildPropertiesTable(List<BrewPropertyInfo> properties)
+        {
+            var sb = new StringBuilder();
+            sb.AppendLine("## All Properties in This Document Type");
+            sb.AppendLine("| Property | Alias | Location | Current Description |");
+            sb.AppendLine("|----------|-------|----------|---------------------|");
+            foreach (var prop in properties)
+            {
+                var location = string.IsNullOrWhiteSpace(prop.ContainerName)
+                    ? "\u2014"
+                    : $"{prop.ContainerType ?? "Group"}: {prop.ContainerName}";
+                var desc = string.IsNullOrWhiteSpace(prop.Description) ? "\u2014" : prop.Description;
+                sb.AppendLine($"| {prop.Name} | `{prop.Alias}` | {location} | {desc} |");
+            }
+            return sb.ToString();
         }
     }
 

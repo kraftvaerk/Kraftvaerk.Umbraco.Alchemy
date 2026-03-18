@@ -72,7 +72,7 @@ export function createAlchemyDesignEditorPropertyClass(Base: HTMLElementConstruc
                 css`
                     #alchemy-brew-btn {
                         position: absolute;
-                        top: var(--uui-size-space-1, 2px);
+                        bottom: 0;
                         right: var(--uui-size-space-1, 2px);
                         z-index: 1;
                     }

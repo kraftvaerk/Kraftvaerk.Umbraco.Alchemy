@@ -25,14 +25,29 @@ export class AlchemyDocTypeContextObserver extends UmbControllerBase {
 
         this.consumeContext(UMB_WORKSPACE_CONTEXT, (wsCtx: any) => {
             console.log('[Alchemy] workspace context resolved:', wsCtx);
-            this.#pushContext(wsCtx);
+            this.#observeWorkspace(wsCtx);
         });
     }
 
-    async #pushContext(wsCtx: any) {
-        const cacheKey = getDocTypeGuidFromUrl();
+    #observeWorkspace(wsCtx: any) {
+        // Observe the workspace's unique value. This fires whenever the user
+        // navigates to a different document type in the SPA — no page reload
+        // required. It also fires on initial load.
+        if (wsCtx.unique) {
+            this.observe(wsCtx.unique, (unique: string | undefined | null) => {
+                if (unique) {
+                    this.#pushContext(wsCtx, unique);
+                }
+            });
+        } else {
+            // Fallback: one-shot push using URL-based key.
+            const cacheKey = getDocTypeGuidFromUrl();
+            if (cacheKey) this.#pushContext(wsCtx, cacheKey);
+        }
+    }
+
+    async #pushContext(wsCtx: any, cacheKey: string) {
         console.log('[Alchemy] #pushContext, cacheKey:', cacheKey);
-        if (!cacheKey) return;
 
         try {
             let model = wsCtx.structure?.getOwnerContentType?.();

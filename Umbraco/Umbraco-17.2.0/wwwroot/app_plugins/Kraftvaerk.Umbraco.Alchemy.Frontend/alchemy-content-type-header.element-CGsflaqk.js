@@ -1,8 +1,9 @@
 import { html as d } from "@umbraco-cms/backoffice/external/lit";
-import { o as l, c as u } from "./alchemy-brew.call-api-DJDCtWmf.js";
-const h = "umb-content-type-workspace-editor-header";
-function w() {
-  const n = customElements.get(h);
+import { o as l, c as u } from "./alchemy-brew.call-api-BJt-gSTw.js";
+import { g as h } from "./alchemy-brew.collect-property-context-DIO58BUL.js";
+const y = "umb-content-type-workspace-editor-header";
+function S() {
+  const n = customElements.get(y);
   if (!n) return;
   const p = n.prototype.render;
   n.prototype.render = function() {
@@ -25,18 +26,18 @@ function w() {
       if (e === void 0) return;
       const t = (r = this.shadowRoot) == null ? void 0 : r.querySelector("#description");
       if (!t) return;
-      const o = await u(this, e, "property-descriptions");
+      const i = h(), o = await u(this, e, "property-descriptions", i);
       o !== void 0 && (t.value = o, t.dispatchEvent(new InputEvent("input", { bubbles: !0, composed: !0 })));
     }}>
                 <uui-icon name="icon-wand"></uui-icon>
             </uui-button>
         `;
   }, n.prototype.updated = function() {
-    var o, r, s, c;
-    const e = (o = this.shadowRoot) == null ? void 0 : o.querySelector("#description"), t = (r = this.shadowRoot) == null ? void 0 : r.querySelector("#alchemy-brew-btn");
-    if (!(!e || !t) && !((s = this.shadowRoot) != null && s.querySelector("#alchemy-description-row"))) {
-      const i = document.createElement("div");
-      i.id = "alchemy-description-row", (c = e.parentNode) == null || c.insertBefore(i, e), i.appendChild(e), i.appendChild(t);
+    var i, o, r, s;
+    const e = (i = this.shadowRoot) == null ? void 0 : i.querySelector("#description"), t = (o = this.shadowRoot) == null ? void 0 : o.querySelector("#alchemy-brew-btn");
+    if (!(!e || !t) && !((r = this.shadowRoot) != null && r.querySelector("#alchemy-description-row"))) {
+      const c = document.createElement("div");
+      c.id = "alchemy-description-row", (s = e.parentNode) == null || s.insertBefore(c, e), c.appendChild(e), c.appendChild(t);
       const a = new CSSStyleSheet();
       a.replaceSync(`
                 #alchemy-description-row {
@@ -55,6 +56,6 @@ function w() {
   };
 }
 export {
-  w as patchAlchemyContentTypeHeader
+  S as patchAlchemyContentTypeHeader
 };
-//# sourceMappingURL=alchemy-content-type-header.element-BRaIOI-b.js.map
+//# sourceMappingURL=alchemy-content-type-header.element-CGsflaqk.js.map
