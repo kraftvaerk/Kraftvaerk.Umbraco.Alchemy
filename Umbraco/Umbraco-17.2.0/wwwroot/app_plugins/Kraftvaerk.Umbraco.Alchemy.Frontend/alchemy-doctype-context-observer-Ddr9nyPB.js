@@ -48,6 +48,7 @@ i = new WeakMap(), c = new WeakSet(), E = function(e) {
     }), k = {
       documentTypeName: ((f = e.getName) == null ? void 0 : f.call(e)) ?? r.name ?? "",
       documentTypeDescription: ((P = e.getDescription) == null ? void 0 : P.call(e)) ?? r.description ?? null,
+      isElementType: r.isElement ?? !1,
       targetPropertyAlias: "",
       targetPropertyName: null,
       targetPropertyContainerName: null,
@@ -63,4 +64,4 @@ export {
   R as AlchemyDocTypeContextObserver,
   R as default
 };
-//# sourceMappingURL=alchemy-doctype-context-observer-B3zLLylh.js.map
+//# sourceMappingURL=alchemy-doctype-context-observer-Ddr9nyPB.js.map

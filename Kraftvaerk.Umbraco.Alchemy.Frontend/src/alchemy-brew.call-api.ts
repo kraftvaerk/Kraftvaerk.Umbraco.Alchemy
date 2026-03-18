@@ -15,6 +15,7 @@ export async function callBrewApi(
     prompt: string,
     contextAlias: string,
     cacheKey?: string,
+    targetPropertyAlias?: string,
 ): Promise<string | undefined> {
     const authContext = await (host as any).getContext(UMB_AUTH_CONTEXT);
     const config = authContext?.getOpenApiConfiguration?.() as
@@ -27,7 +28,7 @@ export async function callBrewApi(
         const { data } = await postApiV1KraftvaerkUmbracoAlchemyBrew({
             baseUrl: window.location.origin,
             auth: token,
-            body: { prompt, contextAlias, cacheKey },
+            body: { prompt, contextAlias, cacheKey, targetPropertyAlias },
         });
         if (!data?.result) return undefined;
         // Strip surrounding quotes the model sometimes adds (e.g. "My description").

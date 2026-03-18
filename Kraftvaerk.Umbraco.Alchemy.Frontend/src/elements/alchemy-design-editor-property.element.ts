@@ -30,8 +30,9 @@ export function createAlchemyDesignEditorPropertyClass(Base: HTMLElementConstruc
             // property-type-settings element pushes the context to the backend
             // cache.  We just send the GUID from the URL as the cache key.
             const cacheKey = getDocTypeGuidFromUrl();
+            const propAlias = (this as any).property?.alias as string | undefined;
 
-            const result = await callBrewApi(this, userPrompt, 'property-descriptions', cacheKey);
+            const result = await callBrewApi(this, userPrompt, 'property-descriptions', cacheKey, propAlias);
             if (result === undefined) return;
             input.value = result;
             input.dispatchEvent(new InputEvent('input', { bubbles: true, composed: true }));

@@ -130,6 +130,22 @@ namespace Kraftvaerk.Umbraco.Alchemy.Backend.Controllers
                      ?? (request.CacheKey is { } ck ? _cache.Get<BrewPropertyContext>($"alchemy:ctx:{ck}") : null);
             if (pc is not null)
             {
+                // Allow the request to override the cached target property alias
+                // so a generic observer cache entry can be specialised per-property.
+                if (!string.IsNullOrWhiteSpace(request.TargetPropertyAlias))
+                {
+                    pc.TargetPropertyAlias = request.TargetPropertyAlias;
+                    // Also set the name from the allProperties list when available.
+                    var matchingProp = pc.AllProperties.FirstOrDefault(
+                        p => string.Equals(p.Alias, request.TargetPropertyAlias, StringComparison.OrdinalIgnoreCase));
+                    if (matchingProp is not null)
+                    {
+                        pc.TargetPropertyName = matchingProp.Name;
+                        pc.TargetPropertyContainerName = matchingProp.ContainerName;
+                        pc.TargetPropertyContainerType = matchingProp.ContainerType;
+                    }
+                }
+
                 var contextPrompt = BuildPropertyContextPrompt(pc);
                 messages.Add(new ChatMessage(ChatRole.System, contextPrompt));
             }
@@ -154,6 +170,10 @@ namespace Kraftvaerk.Umbraco.Alchemy.Backend.Controllers
                 ? string.Empty
                 : $"\n{pc.DocumentTypeDescription}\n";
 
+            var elementTypeHint = pc.IsElementType
+                ? "This is an **element type** (used as a block inside Block List / Block Grid editors). Refer to it as a \"block\" rather than a \"page\" or \"document\"."
+                : "This is NOT an **element type**. It is a normal document-type. Refer to it as a \"page\" or \"document\" rather than a \"block\".";
+
             var targetSection = !string.IsNullOrWhiteSpace(pc.TargetPropertyName)
                 ? $"Write a description for: **{pc.TargetPropertyName}** (alias: `{pc.TargetPropertyAlias}`)"
                 : $"Write a description for the property with alias: `{pc.TargetPropertyAlias}`";
@@ -169,6 +189,7 @@ namespace Kraftvaerk.Umbraco.Alchemy.Backend.Controllers
             return PropertyContextTemplate.Value
                 .Replace("{{DocumentTypeName}}", pc.DocumentTypeName)
                 .Replace("{{DocumentTypeDescription}}", description)
+                .Replace("{{ElementTypeHint}}", elementTypeHint)
                 .Replace("{{TargetPropertySection}}", targetSection)
                 .Replace("{{TargetPropertyContainer}}", container)
                 .Replace("{{PropertiesTable}}", propertiesTable);
@@ -217,6 +238,13 @@ namespace Kraftvaerk.Umbraco.Alchemy.Backend.Controllers
         /// element cannot resolve it directly.
         /// </summary>
         public string? CacheKey { get; set; }
+
+        /// <summary>
+        /// The alias of the property being targeted. When provided, this overrides
+        /// the <see cref="BrewPropertyContext.TargetPropertyAlias"/> in the cached context
+        /// so the observer's generic cache entry can be specialised per-property.
+        /// </summary>
+        public string? TargetPropertyAlias { get; set; }
     }
 
     /// <summary>Document type context sent from the frontend when generating property descriptions.</summary>
@@ -224,6 +252,7 @@ namespace Kraftvaerk.Umbraco.Alchemy.Backend.Controllers
     {
         public string DocumentTypeName { get; set; } = string.Empty;
         public string? DocumentTypeDescription { get; set; }
+        public bool IsElementType { get; set; }
         public string TargetPropertyAlias { get; set; } = string.Empty;
         public string? TargetPropertyName { get; set; }
         public string? TargetPropertyContainerName { get; set; }

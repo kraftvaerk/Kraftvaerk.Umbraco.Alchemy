@@ -37,7 +37,7 @@ export function patchAlchemyContentTypeHeader() {
                     const input = this.shadowRoot?.querySelector('#description') as HTMLInputElement | null;
                     if (!input) return;
                     const cacheKey = getDocTypeGuidFromUrl();
-                    const result = await callBrewApi(this, userPrompt, 'property-descriptions', cacheKey);
+                    const result = await callBrewApi(this, userPrompt, 'document-type-descriptions', cacheKey);
                     if (result === undefined) return;
                     input.value = result;
                     input.dispatchEvent(new InputEvent('input', { bubbles: true, composed: true }));

@@ -1,9 +1,9 @@
 import { html as d } from "@umbraco-cms/backoffice/external/lit";
-import { o as l, c as u } from "./alchemy-brew.call-api-BJt-gSTw.js";
+import { o as u, c as l } from "./alchemy-brew.call-api-DciBY2Nb.js";
 import { g as h } from "./alchemy-brew.collect-property-context-DIO58BUL.js";
-const y = "umb-content-type-workspace-editor-header";
+const m = "umb-content-type-workspace-editor-header";
 function S() {
-  const n = customElements.get(y);
+  const n = customElements.get(m);
   if (!n) return;
   const p = n.prototype.render;
   n.prototype.render = function() {
@@ -16,7 +16,7 @@ function S() {
                 compact
                 @click=${async () => {
       var r;
-      const e = await l(this, {
+      const e = await u(this, {
         prompts: [
           "Write a concise description for this document type.",
           "Explain what content this type represents.",
@@ -26,7 +26,7 @@ function S() {
       if (e === void 0) return;
       const t = (r = this.shadowRoot) == null ? void 0 : r.querySelector("#description");
       if (!t) return;
-      const i = h(), o = await u(this, e, "property-descriptions", i);
+      const i = h(), o = await l(this, e, "document-type-descriptions", i);
       o !== void 0 && (t.value = o, t.dispatchEvent(new InputEvent("input", { bubbles: !0, composed: !0 })));
     }}>
                 <uui-icon name="icon-wand"></uui-icon>
@@ -58,4 +58,4 @@ function S() {
 export {
   S as patchAlchemyContentTypeHeader
 };
-//# sourceMappingURL=alchemy-content-type-header.element-CGsflaqk.js.map
+//# sourceMappingURL=alchemy-content-type-header.element-C8LyqA19.js.map

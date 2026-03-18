@@ -85,7 +85,9 @@ export class AlchemyPropertyTypeSettingsElement extends Base {
         if (!input) return;
 
         const cacheKey = getDocTypeGuidFromUrl();
-        const result = await callBrewApi(this, userPrompt, 'property-descriptions', cacheKey);
+        const propWsCtx = await (this as any).getContext?.(UMB_PROPERTY_TYPE_WORKSPACE_CONTEXT);
+        const propAlias = propWsCtx?.getData?.()?.alias as string | undefined;
+        const result = await callBrewApi(this, userPrompt, 'property-descriptions', cacheKey, propAlias);
         if (result === undefined) return;
         input.value = result;
         input.dispatchEvent(new InputEvent('input', { bubbles: true, composed: true }));

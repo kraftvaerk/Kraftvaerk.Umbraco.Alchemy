@@ -7,6 +7,7 @@ export type ClientOptions = {
 export type BrewPropertyContext = {
     documentTypeName: string;
     documentTypeDescription?: string | null;
+    isElementType?: boolean;
     targetPropertyAlias: string;
     targetPropertyName?: string | null;
     targetPropertyContainerName?: string | null;
@@ -27,6 +28,7 @@ export type BrewRequestModel = {
     contextAlias?: string | null;
     propertyContext?: BrewPropertyContext | null;
     cacheKey?: string | null;
+    targetPropertyAlias?: string | null;
 };
 
 export type BrewResponseModel = {

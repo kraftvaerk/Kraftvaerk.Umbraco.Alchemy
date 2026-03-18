@@ -73,6 +73,7 @@ export class AlchemyDocTypeContextObserver extends UmbControllerBase {
             const context: AlchemyPropertyDescriptionContext = {
                 documentTypeName: wsCtx.getName?.() ?? model.name ?? '',
                 documentTypeDescription: wsCtx.getDescription?.() ?? model.description ?? null,
+                isElementType: model.isElement ?? false,
                 targetPropertyAlias: '',
                 targetPropertyName: null,
                 targetPropertyContainerName: null,
