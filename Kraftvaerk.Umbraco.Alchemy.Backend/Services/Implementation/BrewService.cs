@@ -112,9 +112,14 @@ namespace Kraftvaerk.Umbraco.Alchemy.Backend.Services.Implementation
                 // Choose the right template based on context alias.
                 var opts = _alchemyOptions.Value;
                 var isUfm = string.Equals(contextAlias, opts.Contexts.UfmWriter, StringComparison.OrdinalIgnoreCase);
-                var contextPrompt = isUfm
-                    ? _promptBuilder.BuildUfmContextPrompt(pc)
-                    : await _promptBuilder.BuildPropertyContextPrompt(pc);
+                var isIcon = string.Equals(contextAlias, opts.Contexts.ContentTypeIconWriter, StringComparison.OrdinalIgnoreCase);
+                string contextPrompt;
+                if (isUfm)
+                    contextPrompt = _promptBuilder.BuildUfmContextPrompt(pc);
+                else if (isIcon)
+                    contextPrompt = _promptBuilder.BuildIconContextPrompt(pc);
+                else
+                    contextPrompt = await _promptBuilder.BuildPropertyContextPrompt(pc);
                 messages.Add(new ChatMessage(ChatRole.System, contextPrompt));
             }
 
@@ -150,6 +155,7 @@ namespace Kraftvaerk.Umbraco.Alchemy.Backend.Services.Implementation
                 "ufm" => contexts.UfmWriter,
                 "property-descriptions" => contexts.PropertyTypeDescriptionWriter,
                 "document-type-descriptions" => contexts.ContentTypeDescriptionWriter,
+                "content-type-icons" => contexts.ContentTypeIconWriter,
                 _ => alias, // Pass through unknown aliases unchanged.
             };
         }

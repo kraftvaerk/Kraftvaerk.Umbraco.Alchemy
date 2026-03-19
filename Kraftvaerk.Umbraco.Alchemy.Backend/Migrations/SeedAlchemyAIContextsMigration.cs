@@ -17,6 +17,7 @@ public class SeedAlchemyAIContextsMigration : AsyncMigrationBase
         ("ufm", "UFM", "UFM-Context", "ufm.md"),
         ("property-descriptions", "Property Descriptions", "Text", "property-descriptions.md"),
         ("document-type-descriptions", "Document Type Descriptions", "Text", "document-type-descriptions.md"),
+        ("content-type-icons", "Content Type Icons", "Icon-List", "content-type-icons.md"),
     ];
 
     public SeedAlchemyAIContextsMigration(IMigrationContext context) : base(context) { }

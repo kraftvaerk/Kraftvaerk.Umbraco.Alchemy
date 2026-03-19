@@ -50,7 +50,7 @@ namespace Umbraco.Cms.Web.Common.PublishedModels
 		// properties
 
 		///<summary>
-		/// Author
+		/// Author: Enter the name of the individual or organization responsible for writing the article.
 		///</summary>
 		[global::System.CodeDom.Compiler.GeneratedCodeAttribute("Umbraco.ModelsBuilder.Embedded", "17.2.2+11a412c")]
 		[global::System.Diagnostics.CodeAnalysis.MaybeNull]
@@ -58,7 +58,7 @@ namespace Umbraco.Cms.Web.Common.PublishedModels
 		public virtual string Author => this.Value<string>(_publishedValueFallback, "author");
 
 		///<summary>
-		/// Content
+		/// Content: Add text, images, and headings to create your news article. Use the blocks to structure the content effectively and ensure readability.
 		///</summary>
 		[global::System.CodeDom.Compiler.GeneratedCodeAttribute("Umbraco.ModelsBuilder.Embedded", "17.2.2+11a412c")]
 		[global::System.Diagnostics.CodeAnalysis.MaybeNull]
@@ -66,14 +66,14 @@ namespace Umbraco.Cms.Web.Common.PublishedModels
 		public virtual global::Umbraco.Cms.Core.Models.Blocks.BlockGridModel Content => this.Value<global::Umbraco.Cms.Core.Models.Blocks.BlockGridModel>(_publishedValueFallback, "content");
 
 		///<summary>
-		/// Publishing Date
+		/// Publishing Date: Select the date when the news article will be published. This information helps schedule and organize content effectively.
 		///</summary>
 		[global::System.CodeDom.Compiler.GeneratedCodeAttribute("Umbraco.ModelsBuilder.Embedded", "17.2.2+11a412c")]
 		[ImplementPropertyType("publishingDate")]
 		public virtual global::System.Nullable<global::System.DateOnly> PublishingDate => this.Value<global::System.Nullable<global::System.DateOnly>>(_publishedValueFallback, "publishingDate");
 
 		///<summary>
-		/// Seo Keywords
+		/// Seo Keywords: Enter relevant keywords that represent your article and can help improve search engine visibility. Separate each keyword with a comma.
 		///</summary>
 		[global::System.CodeDom.Compiler.GeneratedCodeAttribute("Umbraco.ModelsBuilder.Embedded", "17.2.2+11a412c")]
 		[global::System.Diagnostics.CodeAnalysis.MaybeNull]
@@ -81,7 +81,7 @@ namespace Umbraco.Cms.Web.Common.PublishedModels
 		public virtual string SeoKeywords => this.Value<string>(_publishedValueFallback, "seoKeywords");
 
 		///<summary>
-		/// Short Version 
+		/// Short Version : Provide a concise summary of the article that highlights key points and engages readers. Aim for clarity and brevity to capture interest quickly.
 		///</summary>
 		[global::System.CodeDom.Compiler.GeneratedCodeAttribute("Umbraco.ModelsBuilder.Embedded", "17.2.2+11a412c")]
 		[global::System.Diagnostics.CodeAnalysis.MaybeNull]

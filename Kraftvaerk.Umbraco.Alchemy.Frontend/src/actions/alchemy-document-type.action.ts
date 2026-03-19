@@ -51,6 +51,7 @@ export class AlchemyDocumentTypeAction extends UmbEntityActionBase<never> {
                 unique,
                 documentTypeName,
                 documentTypeDescription,
+                icon: model.icon ?? null,
                 properties,
             },
         });

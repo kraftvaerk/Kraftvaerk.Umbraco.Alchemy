@@ -10,6 +10,8 @@ export interface DoAlchemyModalData {
     documentTypeName: string;
     /** Document type description (current value). */
     documentTypeDescription: string | null;
+    /** Current icon (e.g. "icon-document color-blue"). */
+    icon: string | null;
     /** All properties on the document type. */
     properties: BrewPropertyInfo[];
 }

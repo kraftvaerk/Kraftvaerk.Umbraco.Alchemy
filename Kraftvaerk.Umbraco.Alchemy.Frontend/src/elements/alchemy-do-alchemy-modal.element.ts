@@ -5,7 +5,10 @@ import type { DoAlchemyModalData, DoAlchemyModalValue, DoAlchemyMode } from '../
 import { callBrewApi } from '../alchemy-brew.call-api.js';
 import { UmbDocumentTypeDetailRepository } from '@umbraco-cms/backoffice/document-type';
 
+type RowKind = 'description' | 'icon';
+
 interface BrewRow {
+    kind: RowKind;
     label: string;
     contextAlias: string;
     targetPropertyAlias: string | null;
@@ -34,6 +37,7 @@ export class AlchemyDoAlchemyModalElement
         const hasDescription = !!data.documentTypeDescription?.trim();
         if (mode === 'everything' || !hasDescription) {
             rows.push({
+                kind: 'description',
                 label: 'Content Type Description',
                 contextAlias: 'document-type-descriptions',
                 targetPropertyAlias: null,
@@ -47,6 +51,7 @@ export class AlchemyDoAlchemyModalElement
             const propHasDesc = !!prop.description?.trim();
             if (mode === 'everything' || !propHasDesc) {
                 rows.push({
+                    kind: 'description',
                     label: prop.name || prop.alias,
                     contextAlias: 'property-descriptions',
                     targetPropertyAlias: prop.alias,
@@ -65,7 +70,6 @@ export class AlchemyDoAlchemyModalElement
 
         const cacheKey = this.modalContext?.data?.unique;
 
-        // Brew all rows sequentially to avoid overwhelming the API
         for (let i = 0; i < this._rows.length; i++) {
             const row = this._rows[i];
             row.status = 'brewing';
@@ -87,6 +91,34 @@ export class AlchemyDoAlchemyModalElement
             row.result = result ?? 'Failed to generate';
             this._rows = [...this._rows];
         }
+    }
+
+    async #startIconBrew() {
+        const data = this.modalContext?.data as DoAlchemyModalData | undefined;
+        const cacheKey = data?.unique;
+
+        this._rows = [{
+            kind: 'icon',
+            label: 'Icon',
+            contextAlias: 'content-type-icons',
+            targetPropertyAlias: null,
+            status: 'brewing',
+            result: null,
+        }];
+        this._phase = 'brewing';
+
+        const prompt = `Pick the best icon for the "${data?.documentTypeName ?? 'content type'}" document type`;
+
+        const result = await callBrewApi(
+            this as unknown as HTMLElement,
+            prompt,
+            'content-type-icons',
+            cacheKey,
+        );
+
+        this._rows[0].status = result ? 'done' : 'error';
+        this._rows[0].result = result ?? 'Failed to generate';
+        this._rows = [...this._rows];
     }
 
     #close() {
@@ -120,11 +152,14 @@ export class AlchemyDoAlchemyModalElement
             // Deep clone — the store returns a frozen object
             const model = structuredClone(frozen);
 
-            // Apply brewed descriptions
+            // Apply brewed results
             for (const row of this._rows) {
                 if (row.status !== 'done' || !row.result) continue;
 
-                if (!row.targetPropertyAlias) {
+                if (row.kind === 'icon') {
+                    // Icon — strip any accidental whitespace / quotes
+                    model.icon = row.result.trim();
+                } else if (!row.targetPropertyAlias) {
                     // Content type description
                     model.description = row.result;
                 } else {
@@ -187,6 +222,7 @@ export class AlchemyDoAlchemyModalElement
         const data = this.modalContext?.data as DoAlchemyModalData | undefined;
         const blankCount = this.#buildRows('blanks').length;
         const totalCount = this.#buildRows('everything').length;
+        const currentIcon = data?.icon;
 
         return html`
             <uui-box>
@@ -211,6 +247,16 @@ export class AlchemyDoAlchemyModalElement
                         <uui-icon name="alchemy-brew-bottle"></uui-icon>
                         Brew Everything
                         <small>(${totalCount} item${totalCount !== 1 ? 's' : ''})</small>
+                    </uui-button>
+                    <uui-button
+                        look="outline"
+                        label="Brew An Icon"
+                        @click=${() => this.#startIconBrew()}>
+                        <uui-icon name="alchemy-brew-bottle"></uui-icon>
+                        Brew An Icon
+                        ${currentIcon
+                            ? html`<small class="current-icon">Current: <uui-icon name="${currentIcon.split(' ')[0]}"></uui-icon></small>`
+                            : ''}
                     </uui-button>
                 </div>
             </uui-box>
@@ -255,6 +301,9 @@ export class AlchemyDoAlchemyModalElement
             case 'brewing':
                 return html`<span class="status-brewing"><uui-loader-circle></uui-loader-circle> Brewing…</span>`;
             case 'done':
+                if (row.kind === 'icon' && row.result) {
+                    return html`<span class="status-done icon-result"><uui-icon name="${row.result}"></uui-icon> ${row.result}</span>`;
+                }
                 return html`<span class="status-done">${row.result}</span>`;
             case 'error':
                 return html`<span class="status-error">Failed to generate</span>`;
@@ -316,6 +365,24 @@ export class AlchemyDoAlchemyModalElement
 
             .status-done {
                 color: var(--uui-color-positive, #2bc37c);
+            }
+
+            .icon-result {
+                display: inline-flex;
+                align-items: center;
+                gap: 8px;
+            }
+
+            .icon-result uui-icon {
+                font-size: 24px;
+            }
+
+            .current-icon {
+                opacity: 0.6;
+                margin-left: 4px;
+                display: inline-flex;
+                align-items: center;
+                gap: 4px;
             }
 
             .status-error {

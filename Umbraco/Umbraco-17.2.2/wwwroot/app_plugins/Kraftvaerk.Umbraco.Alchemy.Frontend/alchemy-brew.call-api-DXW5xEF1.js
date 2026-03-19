@@ -1,5 +1,5 @@
 import { UMB_AUTH_CONTEXT as p } from "@umbraco-cms/backoffice/auth";
-import { a as l } from "./index-U2tSj8bb.js";
+import { a as l } from "./index-DFBjOYvX.js";
 async function f(i, n, a, c, s) {
   var e;
   const t = await i.getContext(p), r = (e = t == null ? void 0 : t.getOpenApiConfiguration) == null ? void 0 : e.call(t), u = typeof (r == null ? void 0 : r.token) == "function" ? await r.token() : r == null ? void 0 : r.token;
@@ -17,4 +17,4 @@ async function f(i, n, a, c, s) {
 export {
   f as c
 };
-//# sourceMappingURL=alchemy-brew.call-api-9xYIgl5a.js.map
+//# sourceMappingURL=alchemy-brew.call-api-DXW5xEF1.js.map

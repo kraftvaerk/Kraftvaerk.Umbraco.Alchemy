@@ -31,4 +31,7 @@ public class AlchemyContextOptions
 
     /// <summary>Context alias for property description generation.</summary>
     public string PropertyTypeDescriptionWriter { get; set; } = "property-descriptions";
+
+    /// <summary>Context alias for content type icon selection.</summary>
+    public string ContentTypeIconWriter { get; set; } = "content-type-icons";
 }

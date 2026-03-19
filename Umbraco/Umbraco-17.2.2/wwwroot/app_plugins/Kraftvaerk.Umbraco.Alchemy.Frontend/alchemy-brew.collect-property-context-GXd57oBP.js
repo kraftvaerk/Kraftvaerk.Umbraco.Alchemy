@@ -1,5 +1,5 @@
 import { UMB_AUTH_CONTEXT as c } from "@umbraco-cms/backoffice/auth";
-import { p as s } from "./index-U2tSj8bb.js";
+import { p as s } from "./index-DFBjOYvX.js";
 function m() {
   const t = window.location.pathname.match(
     /([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})/i
@@ -24,4 +24,4 @@ export {
   m as g,
   w as p
 };
-//# sourceMappingURL=alchemy-brew.collect-property-context-Bw4lto7E.js.map
+//# sourceMappingURL=alchemy-brew.collect-property-context-GXd57oBP.js.map

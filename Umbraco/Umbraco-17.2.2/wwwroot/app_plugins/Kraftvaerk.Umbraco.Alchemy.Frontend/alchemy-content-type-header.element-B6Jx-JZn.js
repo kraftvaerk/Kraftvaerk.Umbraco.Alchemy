@@ -1,7 +1,7 @@
 import { html as u } from "@umbraco-cms/backoffice/external/lit";
 import { o as h, i as m, a as y } from "./alchemy-brew.hold-CI8ek3FG.js";
-import { c as w } from "./alchemy-brew.call-api-9xYIgl5a.js";
-import { g as f } from "./alchemy-brew.collect-property-context-Bw4lto7E.js";
+import { c as w } from "./alchemy-brew.call-api-DXW5xEF1.js";
+import { g as f } from "./alchemy-brew.collect-property-context-GXd57oBP.js";
 const b = "umb-content-type-workspace-editor-header", p = [
   "Write a concise description for this document type.",
   "Explain what content this type represents.",
@@ -59,4 +59,4 @@ function g() {
 export {
   g as patchAlchemyContentTypeHeader
 };
-//# sourceMappingURL=alchemy-content-type-header.element-BM4S7HQh.js.map
+//# sourceMappingURL=alchemy-content-type-header.element-B6Jx-JZn.js.map

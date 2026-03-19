@@ -45,6 +45,16 @@ namespace Kraftvaerk.Umbraco.Alchemy.Backend.Services.Implementation
             return reader.ReadToEnd();
         });
 
+        private static readonly Lazy<string> IconContextTemplate = new(() =>
+        {
+            var assembly = Assembly.GetExecutingAssembly();
+            var resourceName = assembly.GetManifestResourceNames()
+                .First(n => n.EndsWith("IconContextPrompt.md", StringComparison.Ordinal));
+            using var stream = assembly.GetManifestResourceStream(resourceName)!;
+            using var reader = new StreamReader(stream);
+            return reader.ReadToEnd();
+        });
+
         public async Task<string> BuildPropertyContextPrompt(BrewPropertyContext pc)
         {
             var cachedContentTypes = await _cache.GetOrCreateAsync(ContentTypesCacheKey, _ =>
@@ -164,6 +174,27 @@ namespace Kraftvaerk.Umbraco.Alchemy.Backend.Services.Implementation
                 sb.AppendLine($"| {prop.Name} | `{prop.Alias}` |");
             }
             return sb.ToString();
+        }
+
+        public string BuildIconContextPrompt(BrewPropertyContext pc)
+        {
+            var description = string.IsNullOrWhiteSpace(pc.DocumentTypeDescription)
+                ? string.Empty
+                : $"\n{pc.DocumentTypeDescription}\n";
+
+            var elementTypeHint = pc.IsElementType
+                ? "This is an **element type** (used as a block inside Block List / Block Grid editors)."
+                : "This is a normal document type (page / document).";
+
+            var propertiesTable = pc.AllProperties.Count > 0
+                ? BuildAliasOnlyTable(pc.AllProperties)
+                : string.Empty;
+
+            return IconContextTemplate.Value
+                .Replace("{{DocumentTypeName}}", pc.DocumentTypeName)
+                .Replace("{{DocumentTypeDescription}}", description)
+                .Replace("{{ElementTypeHint}}", elementTypeHint)
+                .Replace("{{PropertiesTable}}", propertiesTable);
         }
     }
 }

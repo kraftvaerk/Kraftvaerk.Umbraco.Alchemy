@@ -6,5 +6,6 @@ namespace Kraftvaerk.Umbraco.Alchemy.Backend.Services
     {
         Task<string> BuildPropertyContextPrompt(BrewPropertyContext pc);
         string BuildUfmContextPrompt(BrewPropertyContext pc);
+        string BuildIconContextPrompt(BrewPropertyContext pc);
     }
 }
