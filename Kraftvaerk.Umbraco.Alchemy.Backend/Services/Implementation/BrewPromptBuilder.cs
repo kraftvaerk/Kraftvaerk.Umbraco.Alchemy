@@ -131,8 +131,10 @@ namespace Kraftvaerk.Umbraco.Alchemy.Backend.Services.Implementation
                 .Replace("{{PropertiesTable}}", propertiesTable);
         }
 
-        public string BuildUfmContextPrompt(BrewPropertyContext pc)
+        public async Task<string> BuildUfmContextPrompt(BrewPropertyContext pc)
         {
+            await EnrichEditorAliases(pc);
+
             var description = string.IsNullOrWhiteSpace(pc.DocumentTypeDescription)
                 ? string.Empty
                 : $"\n{pc.DocumentTypeDescription}\n";
@@ -167,11 +169,12 @@ namespace Kraftvaerk.Umbraco.Alchemy.Backend.Services.Implementation
         private static string BuildAliasOnlyTable(List<BrewPropertyInfo> properties)
         {
             var sb = new StringBuilder();
-            sb.AppendLine("| Property | Alias |");
-            sb.AppendLine("|----------|-------|");
+            sb.AppendLine("| Property | Alias | Editor Type |");
+            sb.AppendLine("|----------|-------|-------------|");
             foreach (var prop in properties)
             {
-                sb.AppendLine($"| {prop.Name} | `{prop.Alias}` |");
+                var editor = string.IsNullOrWhiteSpace(prop.EditorAlias) ? "\u2014" : prop.EditorAlias;
+                sb.AppendLine($"| {prop.Name} | `{prop.Alias}` | {editor} |");
             }
             return sb.ToString();
         }
@@ -195,6 +198,35 @@ namespace Kraftvaerk.Umbraco.Alchemy.Backend.Services.Implementation
                 .Replace("{{DocumentTypeDescription}}", description)
                 .Replace("{{ElementTypeHint}}", elementTypeHint)
                 .Replace("{{PropertiesTable}}", propertiesTable);
+        }
+
+        /// <summary>
+        /// Fills in <see cref="BrewPropertyInfo.EditorAlias"/> for properties that
+        /// are missing it (e.g. when the context came from the frontend cache).
+        /// </summary>
+        private async Task EnrichEditorAliases(BrewPropertyContext pc)
+        {
+            if (string.IsNullOrWhiteSpace(pc.DocumentTypeAlias)
+                || pc.AllProperties.All(p => !string.IsNullOrWhiteSpace(p.EditorAlias)))
+                return;
+
+            var cachedContentTypes = await _cache.GetOrCreateAsync(ContentTypesCacheKey, _ =>
+                Task.FromResult(_contentTypeService.GetAll().ToList()));
+
+            var ct = cachedContentTypes?.FirstOrDefault(x => x.Alias == pc.DocumentTypeAlias);
+            if (ct is null) return;
+
+            var editorByAlias = ct.PropertyTypes
+                .ToDictionary(pt => pt.Alias, pt => pt.PropertyEditorAlias, StringComparer.OrdinalIgnoreCase);
+
+            foreach (var prop in pc.AllProperties)
+            {
+                if (string.IsNullOrWhiteSpace(prop.EditorAlias)
+                    && editorByAlias.TryGetValue(prop.Alias, out var editorAlias))
+                {
+                    prop.EditorAlias = editorAlias;
+                }
+            }
         }
     }
 }

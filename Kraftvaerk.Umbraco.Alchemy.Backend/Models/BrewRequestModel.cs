@@ -58,6 +58,7 @@ namespace Kraftvaerk.Umbraco.Alchemy.Backend.Models
         public string? Description { get; set; }
         public string? ContainerName { get; set; }
         public string? ContainerType { get; set; }
+        public string? EditorAlias { get; set; }
     }
 
     /// <summary>Response model for the /brew endpoint.</summary>

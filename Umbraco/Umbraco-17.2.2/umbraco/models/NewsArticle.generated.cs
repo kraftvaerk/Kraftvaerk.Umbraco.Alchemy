@@ -58,7 +58,7 @@ namespace Umbraco.Cms.Web.Common.PublishedModels
 		public virtual string Author => this.Value<string>(_publishedValueFallback, "author");
 
 		///<summary>
-		/// Content: Add text, images, and headings to create your news article. Use the blocks to structure the content effectively and ensure readability.
+		/// Content
 		///</summary>
 		[global::System.CodeDom.Compiler.GeneratedCodeAttribute("Umbraco.ModelsBuilder.Embedded", "17.2.2+11a412c")]
 		[global::System.Diagnostics.CodeAnalysis.MaybeNull]
@@ -73,7 +73,7 @@ namespace Umbraco.Cms.Web.Common.PublishedModels
 		public virtual global::System.Nullable<global::System.DateOnly> PublishingDate => this.Value<global::System.Nullable<global::System.DateOnly>>(_publishedValueFallback, "publishingDate");
 
 		///<summary>
-		/// Seo Keywords: Enter relevant keywords that represent your article and can help improve search engine visibility. Separate each keyword with a comma.
+		/// Seo Keywords
 		///</summary>
 		[global::System.CodeDom.Compiler.GeneratedCodeAttribute("Umbraco.ModelsBuilder.Embedded", "17.2.2+11a412c")]
 		[global::System.Diagnostics.CodeAnalysis.MaybeNull]
@@ -81,7 +81,7 @@ namespace Umbraco.Cms.Web.Common.PublishedModels
 		public virtual string SeoKeywords => this.Value<string>(_publishedValueFallback, "seoKeywords");
 
 		///<summary>
-		/// Short Version : Provide a concise summary of the article that highlights key points and engages readers. Aim for clarity and brevity to capture interest quickly.
+		/// Short Version 
 		///</summary>
 		[global::System.CodeDom.Compiler.GeneratedCodeAttribute("Umbraco.ModelsBuilder.Embedded", "17.2.2+11a412c")]
 		[global::System.Diagnostics.CodeAnalysis.MaybeNull]
