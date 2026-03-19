@@ -637,7 +637,7 @@ let E = !1;
 const V = customElements.define.bind(customElements);
 customElements.define = function(e, t, r) {
   if (e === me && E) {
-    import("./alchemy-design-editor-property.element-D5SyAHTg.js").then(({ createAlchemyDesignEditorPropertyClass: s }) => {
+    import("./alchemy-design-editor-property.element-CIz18-1w.js").then(({ createAlchemyDesignEditorPropertyClass: s }) => {
       const a = s(t);
       V(e, a, r);
     });
@@ -685,34 +685,34 @@ const Ae = async (e, t) => {
     type: "modal",
     alias: "alchemy.modal.doAlchemy",
     name: "Alchemy Do Alchemy Modal",
-    element: () => import("./alchemy-do-alchemy-modal.element-ky4Mgxd1.js")
+    element: () => import("./alchemy-do-alchemy-modal.element-B4irs1C4.js")
   }), E && O(
     t,
     "Umb.WorkspaceView.PropertyType.Settings",
     "umb-property-type-workspace-view-settings",
-    () => import("./alchemy-property-type-settings.element-Bidgs5X4.js")
+    () => import("./alchemy-property-type-settings.element-BRS6bhKt.js")
   ), O(
     t,
     "Umb.WorkspaceView.BlockType.Grid.Settings",
     "umb-block-grid-type-workspace-view",
-    () => import("./alchemy-block-grid-workspace-view.element-CrCGG2zP.js")
+    () => import("./alchemy-block-grid-workspace-view.element-dyqpouey.js")
   ), O(
     t,
     "Umb.WorkspaceView.BlockType.List.Settings",
     "umb-block-list-type-workspace-view-settings",
-    () => import("./alchemy-block-list-workspace-view.element-DBEs0Fqt.js")
+    () => import("./alchemy-block-list-workspace-view.element-CNfeRXwe.js")
   ), t.register({
     type: "workspaceContext",
     alias: "alchemy.workspaceContext.documentType",
     name: "Alchemy Document Type Context Observer",
-    api: () => import("./alchemy-doctype-context-observer-BcK-1LA9.js"),
+    api: () => import("./alchemy-doctype-context-observer-QpbGkUPs.js"),
     conditions: [
       {
         alias: "Umb.Condition.WorkspaceAlias",
         match: "Umb.Workspace.DocumentType"
       }
     ]
-  }), E && import("./alchemy-content-type-header.element-B6Jx-JZn.js").then(({ patchAlchemyContentTypeHeader: a }) => {
+  }), E && import("./alchemy-content-type-header.element-C1nI7yaR.js").then(({ patchAlchemyContentTypeHeader: a }) => {
     a();
   });
   const r = {
@@ -721,7 +721,7 @@ const Ae = async (e, t) => {
     alias: "Alchemy.EntityAction.DocumentType",
     name: "Do Alchemy",
     weight: 10,
-    api: () => import("./alchemy-document-type.action-BDsP4Q3n.js"),
+    api: () => import("./alchemy-document-type.action-DN3g1Tuj.js"),
     forEntityTypes: ["document-type"],
     meta: {
       icon: "alchemy-brew-bottle",
@@ -735,4 +735,4 @@ export {
   Ae as o,
   ge as p
 };
-//# sourceMappingURL=index-DFBjOYvX.js.map
+//# sourceMappingURL=index-CJO75s43.js.map

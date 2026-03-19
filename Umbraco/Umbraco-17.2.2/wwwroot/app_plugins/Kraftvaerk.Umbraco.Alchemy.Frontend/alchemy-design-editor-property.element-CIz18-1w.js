@@ -6,8 +6,8 @@ var d = (t, e, o) => (f(t, e, "read from private field"), o ? o.call(t) : e.get(
 var u = (t, e, o) => (f(t, e, "access private method"), o);
 import { html as R, css as g } from "@umbraco-cms/backoffice/external/lit";
 import { o as E, i as S, a as x } from "./alchemy-brew.hold-CI8ek3FG.js";
-import { c as A } from "./alchemy-brew.call-api-DXW5xEF1.js";
-import { g as P } from "./alchemy-brew.collect-property-context-GXd57oBP.js";
+import { c as A } from "./alchemy-brew.call-api-xNc0KYGJ.js";
+import { g as P } from "./alchemy-brew.collect-property-context-CTV748tw.js";
 function H(t) {
   var i, a, s, y, v;
   const e = t.prototype.render, o = t.styles ?? [];
@@ -72,4 +72,4 @@ function H(t) {
 export {
   H as createAlchemyDesignEditorPropertyClass
 };
-//# sourceMappingURL=alchemy-design-editor-property.element-D5SyAHTg.js.map
+//# sourceMappingURL=alchemy-design-editor-property.element-CIz18-1w.js.map

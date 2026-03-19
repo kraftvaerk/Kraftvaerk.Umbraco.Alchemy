@@ -1,7 +1,7 @@
 import { UmbEntityActionBase as d } from "@umbraco-cms/backoffice/entity-action";
 import { UmbModalToken as y, UMB_MODAL_MANAGER_CONTEXT as h } from "@umbraco-cms/backoffice/modal";
 import { UmbDocumentTypeDetailRepository as A } from "@umbraco-cms/backoffice/document-type";
-import { p as T } from "./alchemy-brew.collect-property-context-GXd57oBP.js";
+import { p as T } from "./alchemy-brew.collect-property-context-CTV748tw.js";
 const f = new y(
   "alchemy.modal.doAlchemy",
   { modal: { type: "sidebar", size: "medium" } }
@@ -48,4 +48,4 @@ export {
   x as AlchemyDocumentTypeAction,
   x as default
 };
-//# sourceMappingURL=alchemy-document-type.action-BDsP4Q3n.js.map
+//# sourceMappingURL=alchemy-document-type.action-DN3g1Tuj.js.map

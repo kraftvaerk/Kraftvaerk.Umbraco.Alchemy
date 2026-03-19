@@ -6,7 +6,7 @@ var g = (n, r, e) => (u(n, r, "read from private field"), e ? e.call(n) : r.get(
 import { UmbControllerBase as B } from "@umbraco-cms/backoffice/class-api";
 import { UMB_WORKSPACE_CONTEXT as E } from "@umbraco-cms/backoffice/workspace";
 import { UMB_AUTH_CONTEXT as b } from "@umbraco-cms/backoffice/auth";
-import { p as K } from "./index-DFBjOYvX.js";
+import { p as K } from "./index-CJO75s43.js";
 var p, l, N, U;
 class q extends B {
   constructor(e) {
@@ -81,4 +81,4 @@ export {
   q as AlchemyDocTypeContextObserver,
   q as default
 };
-//# sourceMappingURL=alchemy-doctype-context-observer-BcK-1LA9.js.map
+//# sourceMappingURL=alchemy-doctype-context-observer-QpbGkUPs.js.map

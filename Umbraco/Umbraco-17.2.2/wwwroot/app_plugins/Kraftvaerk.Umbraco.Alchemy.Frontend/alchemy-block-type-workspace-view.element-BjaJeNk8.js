@@ -1,5 +1,5 @@
 import { H as g, o as q, a as C } from "./alchemy-brew.hold-CI8ek3FG.js";
-import { c as B } from "./alchemy-brew.call-api-DXW5xEF1.js";
+import { c as B } from "./alchemy-brew.call-api-xNc0KYGJ.js";
 const R = [
   "Generate a label using the most identifying property",
   "Show the main property with a fallback for empty state",
@@ -53,4 +53,4 @@ function H(o) {
 export {
   H as i
 };
-//# sourceMappingURL=alchemy-block-type-workspace-view.element-Bp8icHty.js.map
+//# sourceMappingURL=alchemy-block-type-workspace-view.element-BjaJeNk8.js.map

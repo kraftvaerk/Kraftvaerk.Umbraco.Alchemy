@@ -26,6 +26,8 @@ export class AlchemyDoAlchemyModalElement
     @state() private _phase: 'choose' | 'brewing' | 'saving' | 'saved' = 'choose';
     @state() private _rows: BrewRow[] = [];
     @state() private _saveError: string | null = null;
+    @state() private _rebrewRow: BrewRow | null = null;
+    @state() private _rebrewInstruction: string = '';
 
     #buildRows(mode: DoAlchemyMode): BrewRow[] {
         const data: DoAlchemyModalData | undefined = this.modalContext?.data;
@@ -224,11 +226,46 @@ export class AlchemyDoAlchemyModalElement
         const totalCount = this.#buildRows('everything').length;
         const currentIcon = data?.icon;
 
+        const hasDocDesc = !!data?.documentTypeDescription?.trim();
+        const filledProps = data?.properties.filter((p) => !!p.description?.trim()) ?? [];
+        const blankProps = data?.properties.filter((p) => !p.description?.trim()) ?? [];
+
         return html`
             <uui-box>
                 <p style="margin-top:0">
                     Generate AI descriptions for <strong>${data?.documentTypeName ?? 'this content type'}</strong>.
                 </p>
+                <div class="overview">
+                    <div class="overview-row">
+                        <span class="overview-label">Description</span>
+                        ${hasDocDesc
+                            ? html`<span class="overview-filled">✓</span>`
+                            : html`<span class="overview-blank">✗ blank</span>`}
+                    </div>
+                    <div class="overview-row">
+                        <span class="overview-label">Icon</span>
+                        ${currentIcon
+                            ? html`<span class="overview-filled"><uui-icon name="${currentIcon.split(' ')[0]}"></uui-icon> ${currentIcon.split(' ')[0]}</span>`
+                            : html`<span class="overview-blank">✗ none</span>`}
+                    </div>
+                    <div class="overview-row">
+                        <span class="overview-label">Properties</span>
+                        <span>
+                            ${filledProps.length > 0
+                                ? html`<span class="overview-filled">${filledProps.length} filled</span>`
+                                : ''}
+                            ${filledProps.length === 0 && blankProps.length === 0
+                                ? html`<span class="overview-blank">none</span>`
+                                : ''}
+                        </span>
+                    </div>
+                    ${blankProps.length > 0
+                        ? html`<div class="overview-blank-list">
+                            <span class="overview-blank">${blankProps.length} blank:</span>
+                            ${blankProps.map((p) => html`<span class="overview-blank-item">${p.name || p.alias}</span>`)}
+                        </div>`
+                        : ''}
+                </div>
                 <div id="mode-buttons">
                     <uui-button
                         look="outline"
@@ -294,7 +331,76 @@ export class AlchemyDoAlchemyModalElement
         `;
     }
 
+    #onResultEdit(row: BrewRow, e: Event) {
+        const target = e.target as HTMLTextAreaElement;
+        row.result = target.value;
+    }
+
+    async #rebrew(row: BrewRow) {
+        const cacheKey = (this.modalContext?.data as DoAlchemyModalData | undefined)?.unique;
+        const previousResult = row.result ?? '';
+        const instruction = this._rebrewInstruction.trim();
+
+        // Close the adjustment input
+        this._rebrewRow = null;
+        this._rebrewInstruction = '';
+
+        row.status = 'brewing';
+        row.result = null;
+        this._rows = [...this._rows];
+
+        let basePrompt: string;
+        if (row.kind === 'icon') {
+            basePrompt = `Pick the best icon for the "${(this.modalContext?.data as DoAlchemyModalData | undefined)?.documentTypeName ?? 'content type'}" document type`;
+        } else if (row.targetPropertyAlias) {
+            basePrompt = `Write a description for the "${row.label}" property`;
+        } else {
+            basePrompt = `Write a description for this content type`;
+        }
+
+        // If there's a previous result and/or adjustment, structure the prompt
+        // so even a simple model knows what to do.
+        let prompt = basePrompt;
+        if (instruction && previousResult) {
+            prompt = `${basePrompt}\n\nYou previously wrote:\n${previousResult}\n\nThe user wants this adjustment:\n${instruction}`;
+        } else if (instruction) {
+            prompt = `${basePrompt}\n\nAdditional instruction:\n${instruction}`;
+        }
+
+        const result = await callBrewApi(
+            this as unknown as HTMLElement,
+            prompt,
+            row.contextAlias,
+            cacheKey,
+            row.targetPropertyAlias ?? undefined,
+        );
+
+        row.status = result ? 'done' : 'error';
+        row.result = result ?? 'Failed to generate';
+        this._rows = [...this._rows];
+    }
+
+    #openRebrewInput(row: BrewRow) {
+        this._rebrewRow = row;
+        this._rebrewInstruction = '';
+    }
+
+    #cancelRebrew() {
+        this._rebrewRow = null;
+        this._rebrewInstruction = '';
+    }
+
+    #onRebrewKeydown(row: BrewRow, e: KeyboardEvent) {
+        if (e.key === 'Enter' && !e.shiftKey) {
+            e.preventDefault();
+            this.#rebrew(row);
+        } else if (e.key === 'Escape') {
+            this.#cancelRebrew();
+        }
+    }
+
     #renderStatus(row: BrewRow) {
+        const isAdjusting = this._rebrewRow === row;
         switch (row.status) {
             case 'pending':
                 return html`<span class="status-pending">Waiting…</span>`;
@@ -302,12 +408,59 @@ export class AlchemyDoAlchemyModalElement
                 return html`<span class="status-brewing"><uui-loader-circle></uui-loader-circle> Brewing…</span>`;
             case 'done':
                 if (row.kind === 'icon' && row.result) {
-                    return html`<span class="status-done icon-result"><uui-icon name="${row.result}"></uui-icon> ${row.result}</span>`;
+                    return html`<div class="result-col">
+                        <div class="result-row">
+                            <span class="status-done icon-result"><uui-icon name="${row.result}"></uui-icon> ${row.result}</span>
+                            <uui-button compact look="default" label="Rebrew" @click=${() => isAdjusting ? this.#rebrew(row) : this.#openRebrewInput(row)}>
+                                <uui-icon name="alchemy-brew-bottle"></uui-icon>
+                            </uui-button>
+                        </div>
+                        ${isAdjusting ? this.#renderRebrewInput(row) : ''}
+                    </div>`;
                 }
-                return html`<span class="status-done">${row.result}</span>`;
+                return html`<div class="result-col">
+                    <div class="result-row">
+                        <textarea
+                            class="result-edit"
+                            .value=${row.result ?? ''}
+                            @input=${(e: Event) => this.#onResultEdit(row, e)}
+                            rows="2"></textarea>
+                        <uui-button compact look="default" label="Rebrew" @click=${() => isAdjusting ? this.#rebrew(row) : this.#openRebrewInput(row)}>
+                            <uui-icon name="alchemy-brew-bottle"></uui-icon>
+                        </uui-button>
+                    </div>
+                    ${isAdjusting ? this.#renderRebrewInput(row) : ''}
+                </div>`;
             case 'error':
-                return html`<span class="status-error">Failed to generate</span>`;
+                return html`<div class="result-col">
+                    <div class="result-row">
+                        <span class="status-error">Failed to generate</span>
+                        <uui-button compact look="default" label="Retry" @click=${() => isAdjusting ? this.#rebrew(row) : this.#openRebrewInput(row)}>
+                            <uui-icon name="alchemy-brew-bottle"></uui-icon>
+                        </uui-button>
+                    </div>
+                    ${isAdjusting ? this.#renderRebrewInput(row) : ''}
+                </div>`;
         }
+    }
+
+    #renderRebrewInput(row: BrewRow) {
+        return html`<div class="rebrew-input">
+            <input
+                type="text"
+                class="rebrew-text"
+                placeholder="Describe your adjustment… (Enter to brew, Esc to cancel)"
+                .value=${this._rebrewInstruction}
+                @input=${(e: Event) => { this._rebrewInstruction = (e.target as HTMLInputElement).value; }}
+                @keydown=${(e: KeyboardEvent) => this.#onRebrewKeydown(row, e)}
+            />
+            <uui-button compact look="primary" label="Brew" @click=${() => this.#rebrew(row)}>
+                <uui-icon name="alchemy-brew-bottle"></uui-icon>
+            </uui-button>
+            <uui-button compact look="default" label="Cancel" @click=${() => this.#cancelRebrew()}>
+                ✕
+            </uui-button>
+        </div>`;
     }
 
     static override get styles() {
@@ -330,6 +483,59 @@ export class AlchemyDoAlchemyModalElement
             #mode-buttons small {
                 opacity: 0.6;
                 margin-left: 4px;
+            }
+
+            .overview {
+                display: flex;
+                flex-direction: column;
+                gap: 2px;
+                margin-bottom: var(--uui-size-space-4, 12px);
+                padding: var(--uui-size-space-3, 8px) var(--uui-size-space-4, 12px);
+                background: var(--uui-color-surface-alt, #f3f3f5);
+                border-radius: var(--uui-border-radius, 3px);
+                font-size: var(--uui-type-small-size, 12px);
+            }
+
+            .overview-row {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+            }
+
+            .overview-label {
+                opacity: 0.7;
+            }
+
+            .overview-filled {
+                color: var(--uui-color-positive, #2bc37c);
+                display: inline-flex;
+                align-items: center;
+                gap: 4px;
+            }
+
+            .overview-filled uui-icon {
+                font-size: 14px;
+            }
+
+            .overview-blank {
+                color: var(--uui-color-danger, #d42054);
+                opacity: 0.8;
+            }
+
+            .overview-blank-list {
+                display: flex;
+                flex-wrap: wrap;
+                gap: 4px;
+                align-items: center;
+                margin-top: 2px;
+            }
+
+            .overview-blank-item {
+                background: var(--uui-color-danger, #d42054);
+                color: var(--uui-color-surface, #fff);
+                border-radius: 3px;
+                padding: 1px 6px;
+                font-size: 11px;
             }
 
             uui-table {
@@ -365,6 +571,73 @@ export class AlchemyDoAlchemyModalElement
 
             .status-done {
                 color: var(--uui-color-positive, #2bc37c);
+            }
+
+            .result-edit {
+                width: 100%;
+                box-sizing: border-box;
+                color: var(--uui-color-positive, #2bc37c);
+                background: transparent;
+                border: 1px solid var(--uui-color-border, #d8d7d9);
+                border-radius: var(--uui-border-radius, 3px);
+                padding: var(--uui-size-space-2, 4px) var(--uui-size-space-3, 8px);
+                font-family: inherit;
+                font-size: inherit;
+                line-height: 1.4;
+                resize: vertical;
+                field-sizing: content;
+            }
+
+            .result-edit:focus {
+                outline: none;
+                border-color: var(--uui-color-focus, #3544b1);
+            }
+
+            .result-row {
+                display: flex;
+                align-items: flex-start;
+                gap: 4px;
+            }
+
+            .result-row textarea {
+                flex: 1;
+            }
+
+            .result-row uui-button {
+                flex-shrink: 0;
+                margin-top: 2px;
+            }
+
+            .result-col {
+                display: flex;
+                flex-direction: column;
+                gap: 4px;
+            }
+
+            .rebrew-input {
+                display: flex;
+                gap: 4px;
+                align-items: center;
+            }
+
+            .rebrew-text {
+                flex: 1;
+                border: 1px solid var(--uui-color-border, #d8d7d9);
+                border-radius: var(--uui-border-radius, 3px);
+                padding: var(--uui-size-space-1, 3px) var(--uui-size-space-3, 8px);
+                font-family: inherit;
+                font-size: var(--uui-type-small-size, 12px);
+                background: transparent;
+                color: inherit;
+            }
+
+            .rebrew-text:focus {
+                outline: none;
+                border-color: var(--uui-color-focus, #3544b1);
+            }
+
+            .rebrew-text::placeholder {
+                opacity: 0.5;
             }
 
             .icon-result {
