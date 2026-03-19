@@ -6,6 +6,7 @@ export type ClientOptions = {
 
 export type BrewPropertyContext = {
     documentTypeName: string;
+    documentTypeAlias?: string | null;
     documentTypeDescription?: string | null;
     isElementType?: boolean;
     targetPropertyAlias: string;

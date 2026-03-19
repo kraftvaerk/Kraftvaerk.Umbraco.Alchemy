@@ -1,6 +1,8 @@
 using Kraftvaerk.Umbraco.Alchemy.Backend.Models;
+using Kraftvaerk.Umbraco.Alchemy.Backend.Options;
 using Microsoft.Extensions.AI;
 using Microsoft.Extensions.Caching.Memory;
+using Microsoft.Extensions.Options;
 using Umbraco.AI.Core.Chat;
 using Umbraco.AI.Core.Contexts;
 using Umbraco.AI.Core.Models;
@@ -16,6 +18,7 @@ namespace Kraftvaerk.Umbraco.Alchemy.Backend.Services.Implementation
         private readonly IAIProfileService _profileService;
         private readonly IBrewPromptBuilder _promptBuilder;
         private readonly IMemoryCache _cache;
+        private readonly IOptions<AlchemyOptions> _alchemyOptions;
 
         public BrewService(
             IAIChatService chatService,
@@ -23,7 +26,8 @@ namespace Kraftvaerk.Umbraco.Alchemy.Backend.Services.Implementation
             IAIContextFormatter contextFormatter,
             IAIProfileService profileService,
             IBrewPromptBuilder promptBuilder,
-            IMemoryCache cache)
+            IMemoryCache cache,
+            IOptions<AlchemyOptions> alchemyOptions)
         {
             _chatService = chatService;
             _contextService = contextService;
@@ -31,6 +35,7 @@ namespace Kraftvaerk.Umbraco.Alchemy.Backend.Services.Implementation
             _profileService = profileService;
             _promptBuilder = promptBuilder;
             _cache = cache;
+            _alchemyOptions = alchemyOptions;
         }
 
         public void CacheContext(string key, BrewPropertyContext context)
@@ -43,9 +48,10 @@ namespace Kraftvaerk.Umbraco.Alchemy.Backend.Services.Implementation
             var messages = new List<ChatMessage>();
 
             // Enrich with context resources as a system prompt when an alias is given.
-            if (!string.IsNullOrWhiteSpace(request.ContextAlias))
+            var contextAlias = ResolveContextAlias(request.ContextAlias);
+            if (!string.IsNullOrWhiteSpace(contextAlias))
             {
-                var context = await _contextService.GetContextByAliasAsync(request.ContextAlias, cancellationToken);
+                var context = await _contextService.GetContextByAliasAsync(contextAlias, cancellationToken);
 
                 if (context?.Resources.Count > 0)
                 {
@@ -104,15 +110,19 @@ namespace Kraftvaerk.Umbraco.Alchemy.Backend.Services.Implementation
                 }
 
                 // Choose the right template based on context alias.
-                var contextPrompt = string.Equals(request.ContextAlias, "ufm", StringComparison.OrdinalIgnoreCase)
+                var opts = _alchemyOptions.Value;
+                var isUfm = string.Equals(contextAlias, opts.Contexts.UfmWriter, StringComparison.OrdinalIgnoreCase);
+                var contextPrompt = isUfm
                     ? _promptBuilder.BuildUfmContextPrompt(pc)
-                    : _promptBuilder.BuildPropertyContextPrompt(pc);
+                    : await _promptBuilder.BuildPropertyContextPrompt(pc);
                 messages.Add(new ChatMessage(ChatRole.System, contextPrompt));
             }
 
             messages.Add(new ChatMessage(ChatRole.User, request.Prompt));
 
-            var profile = await _profileService.GetDefaultProfileAsync(AICapability.Chat, cancellationToken);
+            var profile = !string.IsNullOrWhiteSpace(_alchemyOptions.Value.ChatProfileAlias)
+                ? await _profileService.GetProfileByAliasAsync(_alchemyOptions.Value.ChatProfileAlias, cancellationToken)
+                : await _profileService.GetDefaultProfileAsync(AICapability.Chat, cancellationToken);
 
             ChatResponse response;
             if (profile is not null)
@@ -121,6 +131,27 @@ namespace Kraftvaerk.Umbraco.Alchemy.Backend.Services.Implementation
                 response = await _chatService.GetChatResponseAsync(messages, cancellationToken: cancellationToken);
 
             return new BrewResponseModel { Result = response.Text ?? string.Empty };
+        }
+
+        /// <summary>
+        /// Maps the incoming context alias from the frontend to the configured
+        /// alias from <see cref="AlchemyOptions.Contexts"/>. This allows the
+        /// frontend to keep sending the well-known aliases while the actual
+        /// Umbraco AI context can be overridden via appsettings.
+        /// </summary>
+        private string? ResolveContextAlias(string? alias)
+        {
+            if (string.IsNullOrWhiteSpace(alias)) return null;
+
+            var contexts = _alchemyOptions.Value.Contexts;
+            // Map well-known frontend aliases to the configured ones.
+            return alias switch
+            {
+                "ufm" => contexts.UfmWriter,
+                "property-descriptions" => contexts.PropertyTypeDescriptionWriter,
+                "document-type-descriptions" => contexts.ContentTypeDescriptionWriter,
+                _ => alias, // Pass through unknown aliases unchanged.
+            };
         }
     }
 }

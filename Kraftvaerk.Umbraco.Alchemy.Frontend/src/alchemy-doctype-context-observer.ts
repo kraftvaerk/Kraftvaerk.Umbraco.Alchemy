@@ -50,12 +50,12 @@ export class AlchemyDocTypeContextObserver extends UmbControllerBase {
         console.log('[Alchemy] #pushContext, cacheKey:', cacheKey);
 
         try {
+            // Always wait for the structure to finish loading before reading
+            // the model — on SPA navigation the previous model may still be
+            // cached when the unique observable fires.
+            await wsCtx.structure?.whenLoaded?.();
+
             let model = wsCtx.structure?.getOwnerContentType?.();
-            if (!model) {
-                console.log('[Alchemy] model not ready, awaiting whenLoaded...');
-                await wsCtx.structure?.whenLoaded?.();
-                model = wsCtx.structure?.getOwnerContentType?.();
-            }
             console.log('[Alchemy] model:', model);
             if (!model) { console.log('[Alchemy] model is null — aborting'); return; }
 
@@ -72,6 +72,7 @@ export class AlchemyDocTypeContextObserver extends UmbControllerBase {
 
             const context: AlchemyPropertyDescriptionContext = {
                 documentTypeName: wsCtx.getName?.() ?? model.name ?? '',
+                documentTypeAlias: model.alias ?? null,
                 documentTypeDescription: wsCtx.getDescription?.() ?? model.description ?? null,
                 isElementType: model.isElement ?? false,
                 targetPropertyAlias: '',

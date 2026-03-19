@@ -5,4 +5,5 @@ You are writing a property description inside the Umbraco backoffice for documen
 ## Target Property
 {{TargetPropertySection}}
 {{TargetPropertyContainer}}
+{{DataTypeConfiguration}}
 {{PropertiesTable}}

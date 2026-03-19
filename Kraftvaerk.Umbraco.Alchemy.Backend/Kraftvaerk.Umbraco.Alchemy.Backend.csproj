@@ -26,6 +26,9 @@
   <ItemGroup>
     <EmbeddedResource Include="Templates\PropertyContextPrompt.md" />
     <EmbeddedResource Include="Templates\UfmContextPrompt.md" />
+    <EmbeddedResource Include="Templates\Contexts\ufm.md" />
+    <EmbeddedResource Include="Templates\Contexts\property-descriptions.md" />
+    <EmbeddedResource Include="Templates\Contexts\document-type-descriptions.md" />
   </ItemGroup>
   <!-- Umbraco 17 for .NET 10 -->
   <ItemGroup Condition="'$(TargetFramework)' == 'net10.0'">

@@ -4,7 +4,7 @@ namespace Kraftvaerk.Umbraco.Alchemy.Backend.Services
 {
     public interface IBrewPromptBuilder
     {
-        string BuildPropertyContextPrompt(BrewPropertyContext pc);
+        Task<string> BuildPropertyContextPrompt(BrewPropertyContext pc);
         string BuildUfmContextPrompt(BrewPropertyContext pc);
     }
 }

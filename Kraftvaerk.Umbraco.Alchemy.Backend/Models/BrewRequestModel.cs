@@ -40,6 +40,7 @@ namespace Kraftvaerk.Umbraco.Alchemy.Backend.Models
     public class BrewPropertyContext
     {
         public string DocumentTypeName { get; set; } = string.Empty;
+        public string? DocumentTypeAlias { get; set; }
         public string? DocumentTypeDescription { get; set; }
         public bool IsElementType { get; set; }
         public string TargetPropertyAlias { get; set; } = string.Empty;

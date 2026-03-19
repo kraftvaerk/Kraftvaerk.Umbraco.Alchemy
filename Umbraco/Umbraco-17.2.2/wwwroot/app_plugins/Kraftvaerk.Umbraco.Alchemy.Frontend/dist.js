@@ -49,7 +49,7 @@ const r = (t, e) => {
     type: "workspaceContext",
     alias: "alchemy.workspaceContext.documentType",
     name: "Alchemy Document Type Context Observer",
-    api: () => import("./alchemy-doctype-context-observer-Ddr9nyPB.js"),
+    api: () => import("./alchemy-doctype-context-observer-ZzWJjXdz.js"),
     conditions: [
       {
         alias: "Umb.Condition.WorkspaceAlias",

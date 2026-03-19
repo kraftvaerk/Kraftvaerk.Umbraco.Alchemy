@@ -1,11 +1,30 @@
 using System.Reflection;
 using System.Text;
+using System.Text.RegularExpressions;
 using Kraftvaerk.Umbraco.Alchemy.Backend.Models;
+using Microsoft.Extensions.Caching.Memory;
+using Newtonsoft.Json;
+using Umbraco.Cms.Core.Services;
+using Umbraco.Cms.Web.Common.AspNetCore;
 
 namespace Kraftvaerk.Umbraco.Alchemy.Backend.Services.Implementation
 {
     public class BrewPromptBuilder : IBrewPromptBuilder
     {
+        internal const string ContentTypesCacheKey = "alchemy:contenttypes";
+        internal const string DataTypesCacheKey = "alchemy:datatypes";
+
+        private readonly IContentTypeService _contentTypeService;
+        private readonly IDataTypeService _dataTypeService;
+        private readonly IMemoryCache _cache;
+
+        public BrewPromptBuilder(IDataTypeService dataTypeService, IContentTypeService contentTypeService, IMemoryCache cache)
+        {
+            _contentTypeService = contentTypeService;
+            _dataTypeService = dataTypeService;
+            _cache = cache;
+        }
+
         private static readonly Lazy<string> PropertyContextTemplate = new(() =>
         {
             var assembly = Assembly.GetExecutingAssembly();
@@ -26,8 +45,35 @@ namespace Kraftvaerk.Umbraco.Alchemy.Backend.Services.Implementation
             return reader.ReadToEnd();
         });
 
-        public string BuildPropertyContextPrompt(BrewPropertyContext pc)
+        public async Task<string> BuildPropertyContextPrompt(BrewPropertyContext pc)
         {
+            var cachedContentTypes = await _cache.GetOrCreateAsync(ContentTypesCacheKey, _ =>
+                Task.FromResult(_contentTypeService.GetAll().ToList()));
+
+            var contentTypeNames = cachedContentTypes?.ToDictionary(x => x.Key.ToString(), x => x.Name);
+
+            var dataTypes = await _cache.GetOrCreateAsync(DataTypesCacheKey, async _ =>
+            {
+                var all = await _dataTypeService.GetAllAsync();
+                return all.ToDictionary(x => x.Key, x => x);
+            });
+
+            string dataTypeConfiguration = string.Empty;
+            if (!string.IsNullOrWhiteSpace(pc.DocumentTypeAlias) && !string.IsNullOrEmpty(pc.TargetPropertyAlias))
+            {
+                var ct = cachedContentTypes?.FirstOrDefault(x => x.Alias == pc.DocumentTypeAlias);
+                var dataTypeKey = ct?.PropertyTypes.FirstOrDefault(x => x.Alias == pc.TargetPropertyAlias)?.DataTypeKey;
+
+                if (dataTypeKey.HasValue && dataTypes is not null && dataTypes.TryGetValue(dataTypeKey.Value, out var dt))
+                {
+                    var json = JsonConvert.SerializeObject(dt.ConfigurationObject);
+                    json = Regex.Replace(json, @"[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}",
+                        match => contentTypeNames is not null && contentTypeNames.TryGetValue(match.Value, out var name) && name is not null ? name : match.Value);
+                    dataTypeConfiguration = $"EditorAlias: {dt.EditorAlias} | Configuration: {json}";
+                }
+            }
+            
+
             var description = string.IsNullOrWhiteSpace(pc.DocumentTypeDescription)
                 ? string.Empty
                 : $"\n{pc.DocumentTypeDescription}\n";
@@ -35,6 +81,10 @@ namespace Kraftvaerk.Umbraco.Alchemy.Backend.Services.Implementation
             var elementTypeHint = pc.IsElementType
                 ? "This is an **element type** (used as a block inside Block List / Block Grid editors). Refer to it as a \"block\" rather than a \"page\" or \"document\"."
                 : "This is NOT an **element type**. It is a normal document-type. Refer to it as a \"page\" or \"document\" rather than a \"block\".";
+
+            var dataTypeConfigSection = !string.IsNullOrWhiteSpace(dataTypeConfiguration)
+                ? $"Data type configuration: `{dataTypeConfiguration}`"
+                : string.Empty;
 
             var targetSection = !string.IsNullOrWhiteSpace(pc.TargetPropertyName)
                 ? $"Write a description for: **{pc.TargetPropertyName}** (alias: `{pc.TargetPropertyAlias}`)"
@@ -54,6 +104,7 @@ namespace Kraftvaerk.Umbraco.Alchemy.Backend.Services.Implementation
                 .Replace("{{ElementTypeHint}}", elementTypeHint)
                 .Replace("{{TargetPropertySection}}", targetSection)
                 .Replace("{{TargetPropertyContainer}}", container)
+                .Replace("{{DataTypeConfiguration}}", dataTypeConfigSection)
                 .Replace("{{PropertiesTable}}", propertiesTable);
         }
 
