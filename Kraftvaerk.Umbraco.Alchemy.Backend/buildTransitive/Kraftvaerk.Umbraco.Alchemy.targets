@@ -4,17 +4,17 @@
 		
 	</PropertyGroup>
 
-	<Target Name="CopyPackageReferenceProjectAssets" BeforeTargets="Build">
+	<Target Name="CopyPackageReferenceProjectAssets" BeforeTargets="PrepareForBuild">
 		<ItemGroup>
 			<PackageReferenceProjectContentFiles Include="$(PackageReferenceProjectContentFilesPath)" />
 		</ItemGroup>
 		<Message Text="Copying Kraftvaerk.Umbraco.Alchemy files: $(PackageReferenceProjectContentFilesPath) - #@(PackageReferenceProjectContentFiles->Count()) files" Importance="high" />
-		<Copy SourceFiles="@(PackageReferenceProjectContentFiles)" DestinationFiles="@(PackageReferenceProjectContentFiles->'$(MSBuildProjectDirectory)\wwwroot\app_plugins\PackageReferenceProject.frontend\%(RecursiveDir)%(Filename)%(Extension)')" SkipUnchangedFiles="true" />
+		<Copy SourceFiles="@(PackageReferenceProjectContentFiles)" DestinationFiles="@(PackageReferenceProjectContentFiles->'$(MSBuildProjectDirectory)\wwwroot\app_plugins\Kraftvaerk.Umbraco.Alchemy.Frontend\%(RecursiveDir)%(Filename)%(Extension)')" SkipUnchangedFiles="true" />
 	</Target>
 
 	<Target Name="ClearPackageReferenceProjectAssets" BeforeTargets="Clean">
 		<ItemGroup>
-			<PackageReferenceProjectDir Include="$(MSBuildProjectDirectory)\wwwroot\app_plugins\PackageReferenceProject.frontend\" />
+			<PackageReferenceProjectDir Include="$(MSBuildProjectDirectory)\wwwroot\app_plugins\Kraftvaerk.Umbraco.Alchemy.Frontend\" />
 		</ItemGroup>
 		<Message Text="Clear old Kraftvaerk.Umbraco.Alchemy data" Importance="high" />
 		<RemoveDir Directories="@(PackageReferenceProjectDir)" />

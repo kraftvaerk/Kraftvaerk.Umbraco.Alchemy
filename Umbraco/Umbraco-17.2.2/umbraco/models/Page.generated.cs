@@ -56,5 +56,13 @@ namespace Umbraco.Cms.Web.Common.PublishedModels
 		[global::System.Diagnostics.CodeAnalysis.MaybeNull]
 		[ImplementPropertyType("blockGrid")]
 		public virtual global::Umbraco.Cms.Core.Models.Blocks.BlockGridModel BlockGrid => this.Value<global::Umbraco.Cms.Core.Models.Blocks.BlockGridModel>(_publishedValueFallback, "blockGrid");
+
+		///<summary>
+		/// Seo Keywords
+		///</summary>
+		[global::System.CodeDom.Compiler.GeneratedCodeAttribute("Umbraco.ModelsBuilder.Embedded", "17.2.2+11a412c")]
+		[global::System.Diagnostics.CodeAnalysis.MaybeNull]
+		[ImplementPropertyType("seoKeywords")]
+		public virtual string SeoKeywords => this.Value<string>(_publishedValueFallback, "seoKeywords");
 	}
 }

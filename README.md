@@ -1,30 +1,70 @@
 # Kraftvaerk.Umbraco.Alchemy
 
-> Using AI to write Umbraco Flavored Markdown labels for blocks and great descriptions for document types and properties.
+[![NuGet](https://img.shields.io/nuget/v/Kraftvaerk.Umbraco.Alchemy?logo=nuget)](https://www.nuget.org/packages/Kraftvaerk.Umbraco.Alchemy)
 
-This package was created for the **Umbraco Spark Package Hackathon** and is a work in progress — scaffolded and ready to be built upon collaboratively. There is no published NuGet package yet.
+> AI-powered writing assistant for the Umbraco backoffice — generates UFM block labels, document type descriptions, property descriptions, and content type icons so you don't have to.
+
+---
+
+## Installation
+
+```bash
+dotnet add package Kraftvaerk.Umbraco.Alchemy
+```
+
+Alchemy requires [Umbraco.AI](https://www.nuget.org/packages/Umbraco.AI) with at least one AI provider configured (e.g. `Umbraco.AI.OpenAI`).
+
+| Dependency | Version |
+|---|---|
+| Umbraco CMS | 14 – 17 |
+| Umbraco.AI | 1.x |
 
 ---
 
 ## What it does
 
-Developers spend time writing descriptions for document types and their properties, and UFM label expressions for blocks. Alchemy automates this by placing a **"Brew with AI"** wand button directly in the relevant parts of the Umbraco backoffice:
+Developers spend time writing descriptions for document types and their properties, crafting UFM label expressions for blocks, and choosing icons for content types. Alchemy automates all of this by placing **"Brew with AI"** wand buttons directly in the Umbraco backoffice:
 
-- **Document type descriptions** - Adds a brew button next to the description field in the document type header.
-- **Property descriptions** - Adds a brew button to both the property type settings panel and the inline design editor property row.
-- **Block UFM labels** - Adds a brew button to the UFM label field in Block Grid and Block List block type workspaces.
+- **Document type descriptions** — Brew button next to the description field in the document type header.
+- **Property descriptions** — Brew button in the property type settings panel and on inline property rows in the Design tab.
+- **Block UFM labels** — Brew button next to the label field in Block Grid and Block List block type workspaces.
+- **Content type icons** — AI-suggested icon selection based on the content type name and structure.
 
-When clicked, a small modal lets the editor choose a predefined prompt or write their own. Alchemy sends the prompt to the AI along with the full document type structure (name, all properties, existing descriptions, group/tab layout) so the suggestion is contextually relevant. The result is inserted directly into the field.
+**Click** the wand to open a modal with predefined prompts and a free-text option. **Hold** the wand to fire the default prompt instantly. Alchemy sends the full document type context (name, properties, groups, existing descriptions) to the AI so every suggestion is contextually relevant. The result is written directly into the field.
 
 ---
 
-## Requirements
+## Configuration
 
-| Dependency | Version |
-|---|---|
-| Umbraco CMS | 17.x |
-| .NET | 10 |
-| Umbraco.AI | 1.4.x |
+Alchemy works out of the box once Umbraco.AI is configured with a chat profile. Optionally, you can customise behaviour in `appsettings.json`:
+
+```json
+{
+  "Alchemy": {
+    "ChatProfileAlias": null,
+    "ExperimentalButtons": false,
+    "Contexts": {
+      "UfmWriter": "ufm",
+      "ContentTypeDescriptionWriter": "document-type-descriptions",
+      "PropertyTypeDescriptionWriter": "property-descriptions",
+      "ContentTypeIconWriter": "content-type-icons"
+    }
+  }
+}
+```
+
+| Setting | Default | Description |
+|---|---|---|
+| `ChatProfileAlias` | `null` | Alias of the Umbraco.AI chat profile to use. When `null`, the default chat profile is used. **Required** if no default chat profile is configured in Umbraco.AI. |
+| `ExperimentalButtons` | `false` | Enables experimental inline brew buttons on property editors and content type headers. |
+| `Contexts.UfmWriter` | `"ufm"` | Umbraco.AI context alias for UFM block label generation. |
+| `Contexts.ContentTypeDescriptionWriter` | `"document-type-descriptions"` | Context alias for document type description generation. |
+| `Contexts.PropertyTypeDescriptionWriter` | `"property-descriptions"` | Context alias for property description generation. |
+| `Contexts.ContentTypeIconWriter` | `"content-type-icons"` | Context alias for content type icon selection. |
+
+### Umbraco.AI contexts
+
+Alchemy seeds default Umbraco.AI contexts on first run via a migration plan, so you get working system prompts for each feature out of the box. You can customise or replace these contexts in the Umbraco.AI backoffice at any time.
 
 ---
 
@@ -32,53 +72,27 @@ When clicked, a small modal lets the editor choose a predefined prompt or write 
 
 ### Backend
 
-A versioned API controller (`BrewController`) is mounted at `/api/v1/Kraftvaerk.Umbraco.Alchemy/brew` and protected by backoffice authentication.
+A versioned API controller is mounted at `/api/v1/Kraftvaerk.Umbraco.Alchemy/brew` and protected by backoffice authentication. It accepts a prompt, an optional Umbraco.AI context alias, and optional document type context, then returns AI-generated text.
 
-**`POST /brew`** - Accepts a prompt, an optional Umbraco.AI context alias, and optional document type context. Calls the Umbraco.AI chat service and returns the generated text.
-
-Request body:
-
-```json
-{
-  "prompt": "Write a concise description for this property.",
-  "contextAlias": "property-descriptions",
-  "cacheKey": "<document-type-guid>",
-  "propertyContext": null
-}
-```
-
-| Field | Description |
-|---|---|
-| `prompt` | Required. The editor's instruction to the AI. |
-| `contextAlias` | Optional. Alias of an Umbraco.AI context to inject as an additional system prompt (e.g. `property-descriptions`, `ufm`). |
-| `cacheKey` | Optional. Document type GUID used to look up property context that was previously cached by the frontend. |
-| `propertyContext` | Optional. Inline document type context when the frontend can resolve it directly (document type name, all properties, target property). |
-
-**`POST /brew/context/{key}`** - Caches a document type context payload for 24 hours. Needed because some frontend elements (e.g. the inline design editor property row) cannot traverse the workspace context hierarchy themselves.
-
-The controller uses the `gpt4omini` Umbraco.AI profile and falls back to the global default profile if that alias is not configured.
+A secondary endpoint (`POST /brew/context/{key}`) caches document type context for 24 hours, allowing brew buttons in deeply nested UI elements to access the full property structure without needing to traverse the workspace context hierarchy.
 
 ### Frontend
 
-As extensive as the new Umbraco backoffice is, there are currently **no extension points** for what Alchemy is trying to do — injecting additional UI into existing, core-owned elements like the document type header, the property row in the design editor, and the property type settings panel. The extension API covers adding entirely new sections, dashboards, and workspace views, but does not expose hooks for augmenting fields inside existing editors.
+The Umbraco backoffice does not currently expose extension points for augmenting fields inside existing editors (document type header, property settings, block type workspace). Alchemy works around this with three strategies:
 
-> 💡 **Hey Umbraco** — wouldn't it be lovely to have extension points for adding actions next to description fields on document types and properties, and next to the UFM label field on block types? We'd love that. Pretty please! 🙏
+1. **`customElements.define` interception** — Substitutes an Alchemy subclass before Umbraco registers `umb-content-type-design-editor-property`.
+2. **Extension registry manifest swap** — Re-registers workspace view manifests pointing at Alchemy subclasses. Used for the property type settings panel and block type workspaces.
+3. **Prototype patching** — Patches `render`/`updated` on the already-defined `umb-content-type-workspace-editor-header` prototype.
 
-To work around this, the frontend uses three strategies depending on how and when each target element is registered:
-
-1. **`customElements.define` interception** — Wraps the global `define` call to substitute an Alchemy subclass for `umb-content-type-design-editor-property` before Umbraco registers it.
-2. **Extension registry manifest swap** — Waits for Umbraco to define an element, then re-registers the manifest pointing at the Alchemy subclass. Used for the property type settings panel, Block Grid, and Block List workspace views.
-3. **Prototype patching** — Patches `render`/`updated` on the already-registered `umb-content-type-workspace-editor-header` prototype directly, since that element is eagerly bundled and defined before the entry point runs.
-
-A `workspaceContext` extension (`AlchemyDocTypeContextObserver`) is also registered for `Umb.Workspace.DocumentType`. It pushes the full document type property list to the backend cache as soon as the workspace opens, so all brew buttons that need context have it available.
+A `workspaceContext` extension pushes the full document type property list to the backend cache when a document type workspace opens, ensuring all brew buttons have the context they need.
 
 ---
 
-## Development
+## Contributing
 
 ### Prerequisites
 
-- .NET 10 SDK  
+- .NET 10 SDK
 - Node.js 20+
 
 ### Frontend
@@ -87,25 +101,14 @@ A `workspaceContext` extension (`AlchemyDocTypeContextObserver`) is also registe
 cd Kraftvaerk.Umbraco.Alchemy.Frontend
 npm install
 npm run build        # production build → ../Kraftvaerk.Umbraco.Alchemy.Backend/ui/
-npm run watch        # incremental watch build, copies assets into local Umbraco wwwroot
+npm run watch        # incremental watch build
 ```
 
-### Backend / local Umbraco
-
-A full Umbraco 17 instance is included under `Umbraco/Umbraco-17.2.0/` for development. Run it with:
+### Local Umbraco instance
 
 ```bash
-dotnet run --project Umbraco/Umbraco-17.2.0/Umbraco-17.2.0.csproj
+dotnet run --project Umbraco/Umbraco-17.2.2/Umbraco-17.2.2.csproj
 ```
-
-Default backoffice credentials:
-
-| | |
-|---|---|
-| Email | admin@example.com |
-| Password | 1234567980 |
-
-Backoffice URL: `https://localhost:{port}/umbraco`
 
 ### Generating the typed API client
 
@@ -116,37 +119,7 @@ npm run generate     # requires the backend to be running
 
 ---
 
-## Project structure
-
-```
-Kraftvaerk.Umbraco.Alchemy.Backend/
-│   Composers/ServiceComposer.cs              # DI registrations
-│   Controllers/BrewController.cs             # /brew and /brew/context/{key} endpoints
-│   buildTransitive/                          # MSBuild props/targets for the package
-│   ui/                                       # Compiled frontend assets (embedded in package)
-│
-Kraftvaerk.Umbraco.Alchemy.Frontend/
-│   src/
-│     index.ts                                # Entry point; registers extensions & patches elements
-│     alchemy-brew.call-api.ts                # Fetch wrapper for the /brew endpoint
-│     alchemy-brew.open.ts                    # Opens the brew modal and returns the selected prompt
-│     alchemy-brew.collect-property-context.ts # Collects & pushes document type context to backend cache
-│     alchemy-doctype-context-observer.ts     # WorkspaceContext controller
-│     elements/
-│       alchemy-brew-modal.element.ts         # Brew prompt modal (predefined prompts + free text)
-│       alchemy-content-type-header.element.ts # Brew button on the document type description field
-│       alchemy-design-editor-property.element.ts  # Brew button on inline property rows (Design tab)
-│       alchemy-property-type-settings.element.ts  # Brew button in the property type settings panel
-│       alchemy-block-grid-workspace-view.element.ts
-│       alchemy-block-list-workspace-view.element.ts
-│       alchemy-block-type-workspace-view.element.ts  # Shared UFM label brew injection for blocks
-│
-Umbraco/                                      # Local Umbraco 17 development instance
-```
-
----
-
 ## License
 
-See [LICENSE.md](LICENSE.md).
+MIT — see [LICENSE.md](LICENSE.md).
 

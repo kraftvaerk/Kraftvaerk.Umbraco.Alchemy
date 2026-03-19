@@ -4,17 +4,24 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <PackageId>Kraftvaerk.Umbraco.Alchemy</PackageId>
-    <Title>Kraftvaerk.Umbraco.Alchemy</Title>
+    <Title>Umbraco Alchemy</Title>
+    <Description>AI-powered developer assistant for the Umbraco backoffice — generates property descriptions, document type descriptions, UFM block labels, and content type icons.</Description>
     <Authors>Umbraco.Community</Authors>
     <Product>Kraftvaerk.Umbraco.Alchemy</Product>
     <PackageReadmeFile>README.md</PackageReadmeFile>
+    <PackageLicenseFile>LICENSE.md</PackageLicenseFile>
+    <PackageProjectUrl>https://github.com/kraftvaerk/Kraftvaerk.Umbraco.Alchemy</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/kraftvaerk/Kraftvaerk.Umbraco.Alchemy</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+    <PackageTags>umbraco;umbraco-package;ai;alchemy;backoffice;umbraco-marketplace</PackageTags>
     <IncludeSymbols>False</IncludeSymbols>
     <SymbolPackageFormat>snupkg</SymbolPackageFormat>
     <PackageOutputPath>$(OutputPath)</PackageOutputPath>
-    <Version>0.0.0</Version>
+    <Version>1.0.0</Version>
   </PropertyGroup>
   <ItemGroup>
     <None Include="README.md" Pack="true" PackagePath="\" />
+    <None Include="LICENSE.md" Pack="true" PackagePath="\" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="Constants\" />
@@ -29,16 +36,13 @@
     <EmbeddedResource Include="Templates\Contexts\content-type-icons.md" />
     <EmbeddedResource Include="Templates\IconContextPrompt.md" />
   </ItemGroup>
-  <!-- Umbraco 17 for .NET 10 -->
-  <ItemGroup Condition="'$(TargetFramework)' == 'net10.0'">
-    <PackageReference Include="Umbraco.Cms" Version="17.2.2" />
+  <ItemGroup>
+    <PackageReference Include="Umbraco.Cms" Version="[17.0.0, 18.0.0)" />
+    <PackageReference Include="Umbraco.AI" Version="[1.6.0, )" />
   </ItemGroup>
   <ItemGroup>
     <None Include="ui\**" Pack="true" PackagePath="content\ui" />
     <None Include="buildTransitive\**" Pack="true" PackagePath="buildTransitive" />
-	<None Include="appsettings-schema.Kraftvaerk.Umbraco.Alchemy.json" Pack="true" PackagePath="\" />
-  </ItemGroup>
-  <ItemGroup>
-    <PackageReference Include="Umbraco.AI" Version="1.6.0" />
+    <None Include="appsettings-schema.Kraftvaerk.Umbraco.Alchemy.json" Pack="true" PackagePath="\" />
   </ItemGroup>
 </Project>

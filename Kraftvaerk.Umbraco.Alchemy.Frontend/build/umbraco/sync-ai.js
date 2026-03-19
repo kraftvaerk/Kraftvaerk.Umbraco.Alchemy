@@ -8,8 +8,9 @@ const Database = require('better-sqlite3');
 
 // Tables that hold AI configuration (in dependency order).
 // Parent tables must come before child tables to satisfy FK constraints.
+// NOTE: umbracoAIConnection is excluded — API keys are encrypted per-instance
+// and cannot be moved between databases. Each instance must configure its own connections.
 const AI_CONFIG_TABLES = [
-    'umbracoAIConnection',
     'umbracoAIProfile',
     'umbracoAIContext',
     'umbracoAIContextResource',
@@ -104,6 +105,7 @@ export default function syncAI() {
 
         try {
             targetDb.pragma('journal_mode = WAL');
+            targetDb.pragma('foreign_keys = OFF');
             const transaction = targetDb.transaction(() => {
                 // Clear existing AI config in reverse order (child tables first)
                 for (const table of [...targetTables].reverse()) {
@@ -135,6 +137,7 @@ export default function syncAI() {
             });
 
             transaction();
+            targetDb.pragma('foreign_keys = ON');
         } finally {
             targetDb.close();
         }
