@@ -2,7 +2,9 @@ import init from "./umbraco/init.js";
 import test from "./umbraco/test.js";
 import remove from "./umbraco/remove.js";
 import syncUsync from "./umbraco/usync.js";
+import syncAI from "./umbraco/sync-ai.js";
 import publish from "./umbraco/publish.js";
+
 
 // Define async function for "init-umbraco"
 async function initUmbraco(args) {
@@ -48,7 +50,10 @@ const [,, action, ...args] = process.argv; // Capture action and all additional 
     case 'publish':
       publishPackage(args);
       break;
+    case 'sync-ai':
+      syncAI(args);
+      break;
     default:
-      console.log('Unknown action. Please specify one of the following: init-umbraco, test-umbraco, remove-umbraco, usync, publish');
+      console.log('Unknown action. Please specify one of the following: init-umbraco, test-umbraco, remove-umbraco, usync, sync-ai, publish');
   }
 })();

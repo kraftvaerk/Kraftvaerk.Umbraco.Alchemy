@@ -13,6 +13,9 @@ namespace Kraftvaerk.Umbraco.Alchemy.Backend.Composers
             // example of registering a service
             builder.Services.AddScoped<IExampleService, ExampleService>();
 
+            builder.Services.AddSingleton<IBrewPromptBuilder, BrewPromptBuilder>();
+            builder.Services.AddScoped<IBrewService, BrewService>();
+
             // Workaround: Umbraco.AI 1.6.0 omits the AITestFeatureCollection registration
             builder.WithCollectionBuilder<AITestFeatureCollectionBuilder>();
         }
