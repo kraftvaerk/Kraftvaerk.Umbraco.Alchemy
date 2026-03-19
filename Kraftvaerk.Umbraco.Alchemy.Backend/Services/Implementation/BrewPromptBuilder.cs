@@ -86,25 +86,38 @@ namespace Kraftvaerk.Umbraco.Alchemy.Backend.Services.Implementation
                 ? $"Data type configuration: `{dataTypeConfiguration}`"
                 : string.Empty;
 
-            var targetSection = !string.IsNullOrWhiteSpace(pc.TargetPropertyName)
-                ? $"Write a description for: **{pc.TargetPropertyName}** (alias: `{pc.TargetPropertyAlias}`)"
-                : $"Write a description for the property with alias: `{pc.TargetPropertyAlias}`";
+            string preamble;
+            string targetSection;
 
-            var container = !string.IsNullOrWhiteSpace(pc.TargetPropertyContainerName)
-                ? $"Located in: {pc.TargetPropertyContainerType ?? "Group"} \"{pc.TargetPropertyContainerName}\""
-                : string.Empty;
+            if (string.IsNullOrWhiteSpace(pc.TargetPropertyAlias))
+            {
+                preamble = $"You are writing a document type description inside the Umbraco backoffice for: **{pc.DocumentTypeName}**";
+                targetSection = $"Write a description for this document type.";
+            }
+            else
+            {
+                preamble = $"You are writing a property description inside the Umbraco backoffice for document type: **{pc.DocumentTypeName}**";
+
+                var target = !string.IsNullOrWhiteSpace(pc.TargetPropertyName)
+                    ? $"Write a description for: **{pc.TargetPropertyName}** (alias: `{pc.TargetPropertyAlias}`)"
+                    : $"Write a description for the property with alias: `{pc.TargetPropertyAlias}`";
+
+                var container = !string.IsNullOrWhiteSpace(pc.TargetPropertyContainerName)
+                    ? $"\nLocated in: {pc.TargetPropertyContainerType ?? "Group"} \"{pc.TargetPropertyContainerName}\""
+                    : string.Empty;
+
+                targetSection = $"## Target Property\n{target}{container}{(string.IsNullOrWhiteSpace(dataTypeConfigSection) ? string.Empty : $"\n{dataTypeConfigSection}")}";
+            }
 
             var propertiesTable = pc.AllProperties.Count > 0
                 ? BuildPropertiesTable(pc.AllProperties)
                 : string.Empty;
 
             return PropertyContextTemplate.Value
-                .Replace("{{DocumentTypeName}}", pc.DocumentTypeName)
+                .Replace("{{Preamble}}", preamble)
                 .Replace("{{DocumentTypeDescription}}", description)
                 .Replace("{{ElementTypeHint}}", elementTypeHint)
-                .Replace("{{TargetPropertySection}}", targetSection)
-                .Replace("{{TargetPropertyContainer}}", container)
-                .Replace("{{DataTypeConfiguration}}", dataTypeConfigSection)
+                .Replace("{{TargetSection}}", targetSection)
                 .Replace("{{PropertiesTable}}", propertiesTable);
         }
 

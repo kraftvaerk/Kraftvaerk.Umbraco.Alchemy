@@ -73,9 +73,9 @@ export function injectAlchemyBrewButton(host: HTMLElement): void {
     const btn = document.createElement('uui-button') as HTMLElement;
     btn.id = 'alchemy-brew-btn';
     btn.setAttribute('label', 'Brew label');
-    btn.setAttribute('look', 'secondary');
+    btn.setAttribute('look', 'default');
     btn.setAttribute('compact', '');
-    btn.innerHTML = '<uui-icon name="icon-wand"></uui-icon>';
+    btn.innerHTML = '<uui-icon name="alchemy-brew-bottle"></uui-icon>';
     btn.addEventListener('click', async () => {
         const userPrompt = await openBrewModal(host, { prompts: BLOCK_PROMPTS });
         if (userPrompt === undefined) return;

@@ -20,33 +20,22 @@ const baseStyles = (Base as any).styles ?? [];
 export class AlchemyPropertyTypeSettingsElement extends Base {
     connectedCallback() {
         super.connectedCallback?.();
-        console.log('[Alchemy] property-type-settings connectedCallback fired');
-        // Push property context to backend cache as soon as we mount —
-        // this element CAN resolve the workspace context, so we do it
-        // eagerly so design-editor-property buttons can use it later.
         this.#pushContextToCache();
     }
 
     async #pushContextToCache() {
-        console.log('[Alchemy] #pushContextToCache called');
         const cacheKey = getDocTypeGuidFromUrl();
-        console.log('[Alchemy] cacheKey from URL:', cacheKey);
         if (!cacheKey) return;
         try {
             const propWsCtx = await (this as any).getContext?.(UMB_PROPERTY_TYPE_WORKSPACE_CONTEXT);
-            console.log('[Alchemy] propWsCtx:', propWsCtx);
             const propData = propWsCtx?.getData?.();
-            console.log('[Alchemy] propData:', propData);
             const workspaceCtx = propWsCtx?.structure;
-            console.log('[Alchemy] workspaceCtx (structure):', workspaceCtx);
             let model = workspaceCtx?.getOwnerContentType?.();
             if (!model) {
-                console.log('[Alchemy] model not ready, awaiting whenLoaded...');
                 await workspaceCtx?.whenLoaded?.();
                 model = workspaceCtx?.getOwnerContentType?.();
             }
-            console.log('[Alchemy] model:', model);
-            if (!model) { console.log('[Alchemy] model is null — aborting cache push'); return; }
+            if (!model) return;
             const containers: Array<{ id: string; name: string; type: string }> = model.containers ?? [];
             const containerMap = new Map(containers.map((c: { id: string; name: string; type: string }) => [c.id, c]));
             const allProperties: AlchemyPropertyInfo[] = (model.properties ?? []).map((p: any) => {
@@ -61,15 +50,14 @@ export class AlchemyPropertyTypeSettingsElement extends Base {
             const context: AlchemyPropertyDescriptionContext = {
                 documentTypeName: model.name ?? '',
                 documentTypeDescription: model.description ?? null,
+                isElementType: model.isElement ?? false,
                 targetPropertyAlias: propData?.alias ?? '',
                 targetPropertyName: propData?.name ?? null,
                 targetPropertyContainerName: (targetContainer as any)?.name ?? null,
                 targetPropertyContainerType: (targetContainer as any)?.type ?? null,
                 allProperties,
             };
-            console.log('[Alchemy] pushing context to cache:', { cacheKey, context });
             await pushPropertyContextToCache(this, cacheKey, context);
-            console.log('[Alchemy] cache push complete');
         } catch (err) { console.error('[Alchemy] #pushContextToCache error:', err); }
     }
 
@@ -127,10 +115,10 @@ export class AlchemyPropertyTypeSettingsElement extends Base {
             <uui-button
                 id="alchemy-brew-btn"
                 label="Brew description"
-                look="secondary"
+                look="default"
                 compact
                 @click=${() => this.#onBrewClick()}>
-                <uui-icon name="icon-wand"></uui-icon>
+                <uui-icon name="alchemy-brew-bottle"></uui-icon>
             </uui-button>
         `;
     }

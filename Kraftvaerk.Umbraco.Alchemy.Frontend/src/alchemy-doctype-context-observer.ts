@@ -1,64 +1,67 @@
 import { UmbControllerBase } from '@umbraco-cms/backoffice/class-api';
 import type { UmbControllerHostElement } from '@umbraco-cms/backoffice/controller-api';
 import { UMB_WORKSPACE_CONTEXT } from '@umbraco-cms/backoffice/workspace';
-import {
-    getDocTypeGuidFromUrl,
-    pushPropertyContextToCache,
-} from './alchemy-brew.collect-property-context.js';
+import { UMB_AUTH_CONTEXT } from '@umbraco-cms/backoffice/auth';
+import { postApiV1KraftvaerkUmbracoAlchemyBrewContextByKey } from './api/sdk.gen.js';
 import type { AlchemyPropertyInfo, AlchemyPropertyDescriptionContext } from './alchemy-brew.collect-property-context.js';
 
 /**
  * Registered as a `workspaceContext` extension scoped to `Umb.Workspace.DocumentType`.
  * Umbraco instantiates this with the workspace host element, so `consumeContext`
- * works correctly — no DOM hacks needed. It watches the structure context and
- * eagerly pushes the property list to the backend IMemoryCache whenever the
- * document type workspace opens.
+ * works correctly — no DOM hacks needed.
+ *
+ * Observes `structure.ownerContentType` (an Observable that emits after the
+ * content type has been loaded) instead of the `unique` observable — this
+ * avoids timing issues where `unique` fires before the data is ready and
+ * the one-shot `whenLoaded()` Promise has not yet been wired up during SPA
+ * navigation.
  */
 export class AlchemyDocTypeContextObserver extends UmbControllerBase {
-    readonly #hostEl: HTMLElement;
+    #authToken: string | undefined;
 
     constructor(host: UmbControllerHostElement) {
         super(host);
-        this.#hostEl = host as unknown as HTMLElement;
 
-        console.log('[Alchemy] AlchemyDocTypeContextObserver constructed');
+        // Resolve auth once through the controller's own context chain — this
+        // is reliable regardless of whether the host is a DOM element or another
+        // controller (workspace API).
+        this.consumeContext(UMB_AUTH_CONTEXT, (authCtx: any) => {
+            const cfg = authCtx?.getOpenApiConfiguration?.() as
+                | { token?: string | (() => Promise<string>) }
+                | undefined;
+            if (typeof cfg?.token === 'function') {
+                cfg.token().then((t: string) => { this.#authToken = t; });
+            } else {
+                this.#authToken = cfg?.token;
+            }
+        });
 
         this.consumeContext(UMB_WORKSPACE_CONTEXT, (wsCtx: any) => {
-            console.log('[Alchemy] workspace context resolved:', wsCtx);
             this.#observeWorkspace(wsCtx);
         });
     }
 
     #observeWorkspace(wsCtx: any) {
-        // Observe the workspace's unique value. This fires whenever the user
-        // navigates to a different document type in the SPA — no page reload
-        // required. It also fires on initial load.
-        if (wsCtx.unique) {
-            this.observe(wsCtx.unique, (unique: string | undefined | null) => {
-                if (unique) {
-                    this.#pushContext(wsCtx, unique);
-                }
-            });
-        } else {
-            // Fallback: one-shot push using URL-based key.
-            const cacheKey = getDocTypeGuidFromUrl();
-            if (cacheKey) this.#pushContext(wsCtx, cacheKey);
+        const structure = wsCtx.structure;
+        if (!structure) return;
+
+        // Observe the actual content type model — fires only after the data
+        // has been loaded, so we never race against `whenLoaded()`.
+        if (structure.ownerContentType) {
+            this.observe(
+                structure.ownerContentType,
+                (model: any) => {
+                    if (!model) return;
+                    const cacheKey = wsCtx.getUnique?.() as string | undefined;
+                    if (cacheKey) this.#pushContext(wsCtx, cacheKey, model);
+                },
+                'alchemy-owner-ct',
+            );
         }
     }
 
-    async #pushContext(wsCtx: any, cacheKey: string) {
-        console.log('[Alchemy] #pushContext, cacheKey:', cacheKey);
-
+    async #pushContext(wsCtx: any, cacheKey: string, model: any) {
         try {
-            // Always wait for the structure to finish loading before reading
-            // the model — on SPA navigation the previous model may still be
-            // cached when the unique observable fires.
-            await wsCtx.structure?.whenLoaded?.();
-
-            let model = wsCtx.structure?.getOwnerContentType?.();
-            console.log('[Alchemy] model:', model);
-            if (!model) { console.log('[Alchemy] model is null — aborting'); return; }
-
             const containers: Array<{ id: string; name: string; type: string }> = model.containers ?? [];
             const containerMap = new Map(containers.map((c: { id: string; name: string; type: string }) => [c.id, c]));
             const allProperties: AlchemyPropertyInfo[] = (model.properties ?? []).map((p: any) => {
@@ -82,9 +85,25 @@ export class AlchemyDocTypeContextObserver extends UmbControllerBase {
                 allProperties,
             };
 
-            console.log('[Alchemy] pushing context to cache:', { cacheKey, properties: allProperties.length });
-            await pushPropertyContextToCache(this.#hostEl, cacheKey, context);
-            console.log('[Alchemy] cache push done');
+            // Re-resolve auth token in case the original was a one-time token
+            // that has expired (consumeContext keeps authCtx alive).
+            let token = this.#authToken;
+            if (!token) {
+                try {
+                    const authCtx = await this.getContext(UMB_AUTH_CONTEXT);
+                    const cfg = (authCtx as any)?.getOpenApiConfiguration?.() as
+                        | { token?: string | (() => Promise<string>) }
+                        | undefined;
+                    token = typeof cfg?.token === 'function' ? await cfg.token() : cfg?.token;
+                } catch { /* proceed without token — will 401 */ }
+            }
+
+            await postApiV1KraftvaerkUmbracoAlchemyBrewContextByKey({
+                baseUrl: window.location.origin,
+                auth: token,
+                path: { key: cacheKey },
+                body: context,
+            });
         } catch (err) {
             console.error('[Alchemy] #pushContext error:', err);
         }

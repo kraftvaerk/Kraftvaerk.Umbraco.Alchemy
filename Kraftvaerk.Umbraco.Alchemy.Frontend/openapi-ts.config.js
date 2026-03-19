@@ -3,7 +3,7 @@ import { defineConfig } from '@hey-api/openapi-ts';
 export default defineConfig({
     client: 'fetch',
     debug: true,
-    input: 'https://localhost:44360/umbraco/swagger/Kraftvaerk.Umbraco.Alchemy-api-v1/swagger.json',
+    input: 'https://localhost:44359/umbraco/swagger/Kraftvaerk.Umbraco.Alchemy-api-v1/swagger.json',
     output: {
         path: 'src/api',
         format: 'prettier',

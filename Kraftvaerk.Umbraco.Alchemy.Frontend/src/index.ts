@@ -1,5 +1,8 @@
 import type { UmbEntryPointOnInit } from '@umbraco-cms/backoffice/extension-api';
 import type { UmbExtensionRegistry, ManifestBase, UmbConditionConfigBase } from '@umbraco-cms/backoffice/extension-api';
+import type { ManifestEntityActionDefaultKind } from '@umbraco-cms/backoffice/entity-action';
+import { getApiV1KraftvaerkUmbracoAlchemyOptions } from './api/sdk.gen.js';
+import { UMB_AUTH_CONTEXT } from '@umbraco-cms/backoffice/auth';
 
 // ─── Strategy 1: customElements.define interception ─────────────────────────
 //
@@ -7,12 +10,17 @@ import type { UmbExtensionRegistry, ManifestBase, UmbConditionConfigBase } from 
 // customElements.define so we can substitute our own subclass under the same
 // tag name at the moment Umbraco first registers each element.
 //   · umb-content-type-design-editor-property  (inline property row, Design tab)
+//
+// Guarded by _experimentalButtons — set asynchronously from the backend options.
+// The define intercept must be installed synchronously (before Umbraco registers
+// the element), but the actual substitution only fires when the flag is true.
 
 const DESIGN_PROPERTY_TAG = 'umb-content-type-design-editor-property';
+let _experimentalButtons = false;
 
 const _originalDefine = customElements.define.bind(customElements);
 (customElements as any).define = function (name: string, ctor: CustomElementConstructor, opts?: ElementDefinitionOptions) {
-    if (name === DESIGN_PROPERTY_TAG) {
+    if (name === DESIGN_PROPERTY_TAG && _experimentalButtons) {
         import('./elements/alchemy-design-editor-property.element.js').then(({ createAlchemyDesignEditorPropertyClass }) => {
             const AlchemyClass = createAlchemyDesignEditorPropertyClass(ctor as any);
             _originalDefine(name, AlchemyClass as unknown as CustomElementConstructor, opts);
@@ -61,7 +69,30 @@ function swapManifestElement(
     }, 200);
 }
 
-export const onInit: UmbEntryPointOnInit = (_host, extensionRegistry) => {
+export const onInit: UmbEntryPointOnInit = async (_host, extensionRegistry) => {
+    // ─── Fetch backend options ───────────────────────────────────────────────
+    try {
+        const authCtx = await (_host as any).getContext(UMB_AUTH_CONTEXT);
+        const cfg = authCtx?.getOpenApiConfiguration?.() as { token?: string | (() => Promise<string>) } | undefined;
+        const token = typeof cfg?.token === 'function' ? await cfg.token() : cfg?.token;
+
+        const { data } = await getApiV1KraftvaerkUmbracoAlchemyOptions({
+            baseUrl: window.location.origin,
+            auth: token,
+        });
+        _experimentalButtons = data?.experimentalButtons ?? false;
+    } catch {
+        _experimentalButtons = false;
+    }
+
+    // Register custom icons
+    extensionRegistry.register({
+        type: 'icons',
+        alias: 'alchemy.icons',
+        name: 'Alchemy Icons',
+        js: () => import('./icons/icons.js'),
+    } as any);
+
     // Register the Brew modal
     extensionRegistry.register({
         type: 'modal',
@@ -70,15 +101,27 @@ export const onInit: UmbEntryPointOnInit = (_host, extensionRegistry) => {
         element: () => import('./elements/alchemy-brew-modal.element.js'),
     } as any);
 
-    // Property type workspace — description field
-    swapManifestElement(
-        extensionRegistry,
-        'Umb.WorkspaceView.PropertyType.Settings',
-        'umb-property-type-workspace-view-settings',
-        () => import('./elements/alchemy-property-type-settings.element.js'),
-    );
+    // Register the Do Alchemy modal
+    extensionRegistry.register({
+        type: 'modal',
+        alias: 'alchemy.modal.doAlchemy',
+        name: 'Alchemy Do Alchemy Modal',
+        element: () => import('./elements/alchemy-do-alchemy-modal.element.js'),
+    } as any);
 
-    // Block Grid type workspace — UFM label field
+    // ─── Experimental buttons (require ExperimentalButtons: true) ────────────
+
+    if (_experimentalButtons) {
+        // Property type workspace — description field (Strategy 2)
+        swapManifestElement(
+            extensionRegistry,
+            'Umb.WorkspaceView.PropertyType.Settings',
+            'umb-property-type-workspace-view-settings',
+            () => import('./elements/alchemy-property-type-settings.element.js'),
+        );
+    }
+
+    // Block Grid type workspace — UFM label field (no proper extension point)
     swapManifestElement(
         extensionRegistry,
         'Umb.WorkspaceView.BlockType.Grid.Settings',
@@ -86,7 +129,7 @@ export const onInit: UmbEntryPointOnInit = (_host, extensionRegistry) => {
         () => import('./elements/alchemy-block-grid-workspace-view.element.js'),
     );
 
-    // Block List type workspace — UFM label field
+    // Block List type workspace — UFM label field (no proper extension point)
     swapManifestElement(
         extensionRegistry,
         'Umb.WorkspaceView.BlockType.List.Settings',
@@ -113,13 +156,31 @@ export const onInit: UmbEntryPointOnInit = (_host, extensionRegistry) => {
         ],
     } as any);
 
-    // ─── Strategy 3: Prototype patching ─────────────────────────────────────
+    // ─── Strategy 3: Prototype patching (experimental) ────────────────────────
     //
     // umb-content-type-workspace-editor-header is eagerly bundled into Umbraco's
     // main chunk and defined before our entry point runs, so the define intercept
     // above fires too late. Instead we patch the prototype directly at init time,
     // before the user navigates to any document type workspace.
-    import('./elements/alchemy-content-type-header.element.js').then(({ patchAlchemyContentTypeHeader }) => {
-        patchAlchemyContentTypeHeader();
-    });
+    if (_experimentalButtons) {
+        import('./elements/alchemy-content-type-header.element.js').then(({ patchAlchemyContentTypeHeader }) => {
+            patchAlchemyContentTypeHeader();
+        });
+    }
+
+    // ─── Entity action: Document Type ────────────────────────────────────────
+    const documentTypeAction: ManifestEntityActionDefaultKind = {
+        type: 'entityAction',
+        kind: 'default',
+        alias: 'Alchemy.EntityAction.DocumentType',
+        name: 'Do Alchemy',
+        weight: 10,
+        api: () => import('./actions/alchemy-document-type.action.js'),
+        forEntityTypes: ['document-type'],
+        meta: {
+            icon: 'alchemy-brew-bottle',
+            label: 'Do Alchemy',
+        },
+    };
+    extensionRegistry.register(documentTypeAction);
 };

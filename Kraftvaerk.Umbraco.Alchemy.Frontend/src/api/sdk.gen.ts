@@ -2,7 +2,7 @@
 
 import type { Client, Options as Options2, TDataShape } from './client';
 import { client } from './client.gen';
-import type { GetApiV1KraftvaerkUmbracoAlchemyExampleData, GetApiV1KraftvaerkUmbracoAlchemyExampleErrors, GetApiV1KraftvaerkUmbracoAlchemyExampleResponses, PostApiV1KraftvaerkUmbracoAlchemyBrewContextByKeyData, PostApiV1KraftvaerkUmbracoAlchemyBrewContextByKeyErrors, PostApiV1KraftvaerkUmbracoAlchemyBrewContextByKeyResponses, PostApiV1KraftvaerkUmbracoAlchemyBrewData, PostApiV1KraftvaerkUmbracoAlchemyBrewErrors, PostApiV1KraftvaerkUmbracoAlchemyBrewResponses } from './types.gen';
+import type { GetApiV1KraftvaerkUmbracoAlchemyOptionsData, GetApiV1KraftvaerkUmbracoAlchemyOptionsErrors, GetApiV1KraftvaerkUmbracoAlchemyOptionsResponses, PostApiV1KraftvaerkUmbracoAlchemyBrewContextByKeyData, PostApiV1KraftvaerkUmbracoAlchemyBrewContextByKeyErrors, PostApiV1KraftvaerkUmbracoAlchemyBrewContextByKeyResponses, PostApiV1KraftvaerkUmbracoAlchemyBrewData, PostApiV1KraftvaerkUmbracoAlchemyBrewErrors, PostApiV1KraftvaerkUmbracoAlchemyBrewResponses } from './types.gen';
 
 export type Options<TData extends TDataShape = TDataShape, ThrowOnError extends boolean = boolean> = Options2<TData, ThrowOnError> & {
     /**
@@ -52,15 +52,15 @@ export const postApiV1KraftvaerkUmbracoAlchemyBrewContextByKey = <ThrowOnError e
     });
 };
 
-export const getApiV1KraftvaerkUmbracoAlchemyExample = <ThrowOnError extends boolean = false>(options?: Options<GetApiV1KraftvaerkUmbracoAlchemyExampleData, ThrowOnError>) => {
-    return (options?.client ?? client).get<GetApiV1KraftvaerkUmbracoAlchemyExampleResponses, GetApiV1KraftvaerkUmbracoAlchemyExampleErrors, ThrowOnError>({
+export const getApiV1KraftvaerkUmbracoAlchemyOptions = <ThrowOnError extends boolean = false>(options?: Options<GetApiV1KraftvaerkUmbracoAlchemyOptionsData, ThrowOnError>) => {
+    return (options?.client ?? client).get<GetApiV1KraftvaerkUmbracoAlchemyOptionsResponses, GetApiV1KraftvaerkUmbracoAlchemyOptionsErrors, ThrowOnError>({
         security: [
             {
                 scheme: 'bearer',
                 type: 'http'
             }
         ],
-        url: '/api/v1/Kraftvaerk.Umbraco.Alchemy/example',
+        url: '/api/v1/Kraftvaerk.Umbraco.Alchemy/options',
         ...options
     });
 };

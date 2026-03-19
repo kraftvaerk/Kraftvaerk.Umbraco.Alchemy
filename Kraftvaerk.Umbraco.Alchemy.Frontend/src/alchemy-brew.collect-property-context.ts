@@ -35,15 +35,13 @@ export async function pushPropertyContextToCache(
 
     const token = typeof config?.token === 'function' ? await config.token() : config?.token;
 
-    console.log('[Alchemy] pushPropertyContextToCache: fetching brew/context/', cacheKey);
     try {
-        const { response } = await postApiV1KraftvaerkUmbracoAlchemyBrewContextByKey({
+        await postApiV1KraftvaerkUmbracoAlchemyBrewContextByKey({
             baseUrl: window.location.origin,
             auth: token,
             path: { key: cacheKey },
             body: context,
         });
-        console.log('[Alchemy] pushPropertyContextToCache response:', response.status);
     } catch (err) {
         console.error('[Alchemy] pushPropertyContextToCache error:', err);
     }

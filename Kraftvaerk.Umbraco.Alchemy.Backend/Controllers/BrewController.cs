@@ -1,9 +1,11 @@
 using Asp.Versioning;
 using Kraftvaerk.Umbraco.Alchemy.Backend.Models;
+using Kraftvaerk.Umbraco.Alchemy.Backend.Options;
 using Kraftvaerk.Umbraco.Alchemy.Backend.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Options;
 using Umbraco.Cms.Api.Common.Attributes;
 using Umbraco.Cms.Api.Common.Filters;
 using Umbraco.Cms.Core;
@@ -20,10 +22,26 @@ namespace Kraftvaerk.Umbraco.Alchemy.Backend.Controllers
     public class BrewController : Controller
     {
         private readonly IBrewService _brewService;
+        private readonly AlchemyOptions _options;
 
-        public BrewController(IBrewService brewService)
+        public BrewController(IBrewService brewService, IOptions<AlchemyOptions> options)
         {
             _brewService = brewService;
+            _options = options.Value;
+        }
+
+        /// <summary>
+        /// Returns the current Alchemy configuration exposed to the frontend.
+        /// </summary>
+        [HttpGet("options")]
+        [MapToApiVersion("1.0")]
+        [ProducesResponseType(typeof(AlchemyOptionsResponseModel), StatusCodes.Status200OK)]
+        public IActionResult GetOptions()
+        {
+            return Ok(new AlchemyOptionsResponseModel
+            {
+                ExperimentalButtons = _options.ExperimentalButtons
+            });
         }
 
         /// <summary>

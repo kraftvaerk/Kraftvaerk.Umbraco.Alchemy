@@ -40,14 +40,14 @@ export function patchAlchemyContentTypeHeader() {
             <uui-button
                 id="alchemy-brew-btn"
                 label="Brew description"
-                look="secondary"
+                look="default"
                 compact
                 @click=${async () => {
                     const userPrompt = await openBrewModal(this, { prompts: HEADER_PROMPTS });
                     if (userPrompt === undefined) return;
                     await brewDirectly(this, userPrompt);
                 }}>
-                <uui-icon name="icon-wand"></uui-icon>
+                <uui-icon name="alchemy-brew-bottle"></uui-icon>
             </uui-button>
         `;
     };

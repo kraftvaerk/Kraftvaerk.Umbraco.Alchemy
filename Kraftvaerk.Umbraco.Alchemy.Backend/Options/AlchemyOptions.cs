@@ -10,6 +10,11 @@ public class AlchemyOptions
     public string? ChatProfileAlias { get; set; }
 
     /// <summary>
+    /// Enables experimental inline brew buttons on property editors and content type headers.
+    /// </summary>
+    public bool ExperimentalButtons { get; set; }
+
+    /// <summary>
     /// Context alias overrides. Each maps to an Umbraco AI context that the
     /// corresponding feature will inject as a system prompt.
     /// </summary>

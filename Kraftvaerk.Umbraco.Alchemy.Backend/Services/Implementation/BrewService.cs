@@ -92,7 +92,7 @@ namespace Kraftvaerk.Umbraco.Alchemy.Backend.Services.Implementation
             var pc = request.PropertyContext
                      ?? (request.CacheKey is { } ck ? _cache.Get<BrewPropertyContext>($"alchemy:ctx:{ck}") : null);
             if (pc is not null)
-            {
+                {
                 // Allow the request to override the cached target property alias
                 // so a generic observer cache entry can be specialised per-property.
                 if (!string.IsNullOrWhiteSpace(request.TargetPropertyAlias))

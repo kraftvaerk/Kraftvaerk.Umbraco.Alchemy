@@ -68,10 +68,10 @@ export function createAlchemyDesignEditorPropertyClass(Base: HTMLElementConstruc
                 <uui-button
                     id="alchemy-brew-btn"
                     label="Brew description"
-                    look="secondary"
+                    look="default"
                     compact
                     @click=${() => this.#onBrewClick()}>
-                    <uui-icon name="icon-wand"></uui-icon>
+                    <uui-icon name="alchemy-brew-bottle"></uui-icon>
                 </uui-button>
             `;
         }
