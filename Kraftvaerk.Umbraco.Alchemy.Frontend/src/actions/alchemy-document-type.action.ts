@@ -34,8 +34,7 @@ export class AlchemyDocumentTypeAction extends UmbEntityActionBase<never> {
         const documentTypeDescription = model.description ?? null;
 
         // Push property context to backend cache so brew API can use it
-        const hostEl = (this as any)._host as HTMLElement;
-        await pushPropertyContextToCache(hostEl, unique, {
+        await pushPropertyContextToCache(this as unknown as HTMLElement, unique, {
             documentTypeName,
             documentTypeAlias: model.alias ?? null,
             documentTypeDescription,

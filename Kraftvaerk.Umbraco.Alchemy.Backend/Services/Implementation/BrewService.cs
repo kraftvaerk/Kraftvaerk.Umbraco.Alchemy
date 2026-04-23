@@ -5,8 +5,7 @@ using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Options;
 using Umbraco.AI.Core.Chat;
 using Umbraco.AI.Core.Contexts;
-using Umbraco.AI.Core.Models;
-using Umbraco.AI.Core.Profiles;
+using Umbraco.AI.Core.InlineChat;
 using Umbraco.Cms.Core.Models;
 using Umbraco.Cms.Core.Services;
 
@@ -16,8 +15,7 @@ namespace Kraftvaerk.Umbraco.Alchemy.Backend.Services.Implementation
     {
         private readonly IAIChatService _chatService;
         private readonly IAIContextService _contextService;
-        private readonly IAIContextFormatter _contextFormatter;
-        private readonly IAIProfileService _profileService;
+        private readonly IAIContextProcessor _contextProcessor;
         private readonly IBrewPromptBuilder _promptBuilder;
         private readonly IMemoryCache _cache;
         private readonly IContentTypeService _contentTypeService;
@@ -26,8 +24,7 @@ namespace Kraftvaerk.Umbraco.Alchemy.Backend.Services.Implementation
         public BrewService(
             IAIChatService chatService,
             IAIContextService contextService,
-            IAIContextFormatter contextFormatter,
-            IAIProfileService profileService,
+            IAIContextProcessor contextProcessor,
             IBrewPromptBuilder promptBuilder,
             IMemoryCache cache,
             IContentTypeService contentTypeService,
@@ -35,8 +32,7 @@ namespace Kraftvaerk.Umbraco.Alchemy.Backend.Services.Implementation
         {
             _chatService = chatService;
             _contextService = contextService;
-            _contextFormatter = contextFormatter;
-            _profileService = profileService;
+            _contextProcessor = contextProcessor;
             _promptBuilder = promptBuilder;
             _cache = cache;
             _alchemyOptions = alchemyOptions;
@@ -60,7 +56,7 @@ namespace Kraftvaerk.Umbraco.Alchemy.Backend.Services.Implementation
 
                 if (context?.Resources.Count > 0)
                 {
-                    // Map AIContextResource ? AIResolvedResource so the formatter can process them.
+                    // Map AIContextResource â†’ AIResolvedResource so the processor can handle them.
                     var resolvedResources = context.Resources
                         .Select(r => new AIResolvedResource
                         {
@@ -68,7 +64,7 @@ namespace Kraftvaerk.Umbraco.Alchemy.Backend.Services.Implementation
                             ResourceTypeId = r.ResourceTypeId,
                             Name = r.Name,
                             Description = r.Description,
-                            Data = r.Data,
+                            Settings = r.Settings,
                             InjectionMode = r.InjectionMode,
                             Source = "Alchemy",
                             ContextName = context.Name,
@@ -86,7 +82,7 @@ namespace Kraftvaerk.Umbraco.Alchemy.Backend.Services.Implementation
                         AllResources = resolvedResources,
                     };
 
-                    var systemPrompt = _contextFormatter.FormatContextForLlm(resolvedContext);
+                    var systemPrompt = await _contextProcessor.ProcessContextForLlmAsync(resolvedContext, cancellationToken);
                     if (!string.IsNullOrWhiteSpace(systemPrompt))
                         messages.Add(new ChatMessage(ChatRole.System, systemPrompt));
                 }
@@ -97,7 +93,7 @@ namespace Kraftvaerk.Umbraco.Alchemy.Backend.Services.Implementation
             var pc = request.PropertyContext
                      ?? (request.CacheKey is { } ck ? _cache.Get<BrewPropertyContext>($"alchemy:ctx:{ck}") : null);
 
-            // Last ditch effort – the cache key should match a content-type GUID.
+            // Last ditch effort:ï¿½ the cache key should match a content-type GUID.
             // Build a BrewPropertyContext from the content type definition itself.
             if (pc is null
                 && Guid.TryParse(request.CacheKey, out var contentTypeKey)
@@ -164,15 +160,16 @@ namespace Kraftvaerk.Umbraco.Alchemy.Backend.Services.Implementation
 
             messages.Add(new ChatMessage(ChatRole.User, request.Prompt));
 
-            var profile = !string.IsNullOrWhiteSpace(_alchemyOptions.Value.ChatProfileAlias)
-                ? await _profileService.GetProfileByAliasAsync(_alchemyOptions.Value.ChatProfileAlias, cancellationToken)
-                : await _profileService.GetDefaultProfileAsync(AICapability.Chat, cancellationToken);
-
-            ChatResponse response;
-            if (profile is not null)
-                response = await _chatService.GetChatResponseAsync(profile.Id, messages, cancellationToken: cancellationToken);
-            else
-                response = await _chatService.GetChatResponseAsync(messages, cancellationToken: cancellationToken);
+            var profileAlias = _alchemyOptions.Value.ChatProfileAlias;
+            var response = await _chatService.GetChatResponseAsync(
+                chat =>
+                {
+                    chat.WithAlias("alchemy-brew");
+                    if (!string.IsNullOrWhiteSpace(profileAlias))
+                        chat.WithProfile(profileAlias);
+                },
+                messages,
+                cancellationToken);
 
             return new BrewResponseModel { Result = response.Text ?? string.Empty };
         }

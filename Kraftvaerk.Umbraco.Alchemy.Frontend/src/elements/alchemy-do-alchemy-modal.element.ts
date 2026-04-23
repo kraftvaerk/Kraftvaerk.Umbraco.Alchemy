@@ -174,7 +174,7 @@ export class AlchemyDoAlchemyModalElement
             }
 
             await repo.save(model);
-            this.modalContext?.submit();
+            this._phase = 'saved';
         } catch (err) {
             console.error('[Alchemy] Save failed:', err);
             this._saveError = 'Failed to save document type';

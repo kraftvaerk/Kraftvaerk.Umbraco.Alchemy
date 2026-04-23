@@ -17,7 +17,7 @@
     <IncludeSymbols>False</IncludeSymbols>
     <SymbolPackageFormat>snupkg</SymbolPackageFormat>
     <PackageOutputPath>$(OutputPath)</PackageOutputPath>
-    <Version>1.0.0</Version>
+    <Version>1.0.1</Version>
   </PropertyGroup>
   <ItemGroup>
     <None Include="README.md" Pack="true" PackagePath="\" />
@@ -38,7 +38,7 @@
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Umbraco.Cms" Version="[17.0.0, 18.0.0)" />
-    <PackageReference Include="Umbraco.AI" Version="[1.6.0, )" />
+    <PackageReference Include="Umbraco.AI" Version="[1.9.0, )" />
   </ItemGroup>
   <ItemGroup>
     <None Include="ui\**" Pack="true" PackagePath="content\ui" />

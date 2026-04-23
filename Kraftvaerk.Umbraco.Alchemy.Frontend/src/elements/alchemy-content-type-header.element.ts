@@ -52,7 +52,10 @@ export function patchAlchemyContentTypeHeader() {
         `;
     };
 
+    const originalUpdated: ((this: HTMLElement) => void) | undefined = HeaderClass.prototype.updated;
+
     HeaderClass.prototype.updated = function () {
+        originalUpdated?.call(this);
         // #description sits alone in a flex-column (#editors). We wrap it
         // together with the brew button in a flex-row div so the button
         // appears inline at the trailing edge of the description input.

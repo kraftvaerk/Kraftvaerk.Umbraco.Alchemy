@@ -12,6 +12,7 @@ type HTMLElementConstructor = new (...args: any[]) => HTMLElement;
 
 export function createAlchemyDesignEditorPropertyClass(Base: HTMLElementConstructor) {
     const baseRender: (this: HTMLElement) => unknown = (Base as any).prototype.render;
+    const baseUpdated: ((this: HTMLElement) => void) | undefined = (Base as any).prototype.updated;
     const baseStyles = (Base as any).styles ?? [];
 
     return class AlchemyDesignEditorPropertyElement extends Base {
@@ -41,6 +42,7 @@ export function createAlchemyDesignEditorPropertyClass(Base: HTMLElementConstruc
         }
 
         updated() {
+            baseUpdated?.call(this);
             // The description textarea lives inside a <p> with no label sibling.
             // We physically move the brew button into that <p> after each render
             // so it appears at the top-right corner of the textarea area.

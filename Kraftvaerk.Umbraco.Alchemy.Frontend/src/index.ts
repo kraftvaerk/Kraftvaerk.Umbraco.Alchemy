@@ -43,12 +43,14 @@ function swapManifestElement(
     alias: string,
     tag: string,
     elementLoader: () => Promise<unknown>,
+    attempt = 0,
 ) {
+    if (attempt >= 50) return; // give up after ~10 s
     setTimeout(async () => {
         const existing = extensionRegistry.getByAlias(alias);
 
         if (!existing) {
-            swapManifestElement(extensionRegistry, alias, tag, elementLoader);
+            swapManifestElement(extensionRegistry, alias, tag, elementLoader, attempt + 1);
             return;
         }
 

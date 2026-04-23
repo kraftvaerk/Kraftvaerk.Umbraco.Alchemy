@@ -1,9 +1,9 @@
 {
     "$schema": "./../umbraco-package-schema.json",
     "id": "Kraftvaerk.Umbraco.Alchemy.Frontend",
-    "name": "Kraftvaerk.Umbraco.Alchemy.Frontend",
+    "name": "Umbraco Alchemy",
     "allowPackageTelemetry": true,
-    "version": "0.0.0",
+    "version": "1.0.0",
     "extensions": [
         {
           "name": "Umbraco.Community-Kraftvaerk.Umbraco.Alchemy.Frontend EntryPoint",

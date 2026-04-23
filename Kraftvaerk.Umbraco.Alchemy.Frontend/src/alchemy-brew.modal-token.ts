@@ -6,10 +6,6 @@ export interface AlchemyBrewModalData {
      * the modal. Clicking one immediately submits the modal with that prompt.
      */
     prompts?: string[];
-    /**
-     * Optional context string passed to the AI call. Not displayed in the UI.
-     */
-    context?: string;
 }
 
 export interface AlchemyBrewModalValue {

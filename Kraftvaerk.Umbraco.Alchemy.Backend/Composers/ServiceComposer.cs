@@ -4,7 +4,6 @@ using Kraftvaerk.Umbraco.Alchemy.Backend.Notifications;
 using Kraftvaerk.Umbraco.Alchemy.Backend.Options;
 using Kraftvaerk.Umbraco.Alchemy.Backend.Services;
 using Kraftvaerk.Umbraco.Alchemy.Backend.Services.Implementation;
-using Umbraco.AI.Core.Tests;
 using Umbraco.Cms.Core.Composing;
 using Umbraco.Cms.Core.Notifications;
 
@@ -19,9 +18,6 @@ namespace Kraftvaerk.Umbraco.Alchemy.Backend.Composers
 
             builder.Services.AddSingleton<IBrewPromptBuilder, BrewPromptBuilder>();
             builder.Services.AddScoped<IBrewService, BrewService>();
-
-            // Workaround: Umbraco.AI 1.6.0 omits the AITestFeatureCollection registration
-            builder.WithCollectionBuilder<AITestFeatureCollectionBuilder>();
 
             builder.AddNotificationAsyncHandler<UmbracoApplicationStartedNotification, AlchemyMigrationHandler>();
             builder.AddNotificationAsyncHandler<ContentTypeSavedNotification, DataTypeCacheClearNotificationHandler>();
